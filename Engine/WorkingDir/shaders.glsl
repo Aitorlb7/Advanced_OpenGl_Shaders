@@ -5,11 +5,30 @@
 
 #if defined(VERTEX) ///////////////////////////////////////////////////
 
-// TODO: Write your vertex shader here
+layout(location=0) in vec3 position;
+layout(location=1) in vec2 texCoords;
+
+
+out vec2 _texCoords;
+
+void main()
+{
+	_texCoords = texCoords;
+	gl_Position = vec4(position, 1.0);
+}
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
-// TODO: Write your fragment shader here
+in vec2 _texCoords;
+
+uniform sampler2D textureSampler;
+
+layout(location=0) out vec4 color;
+
+void main()
+{
+	color = texture(textureSampler, _texCoords);
+}
 
 #endif
 #endif
