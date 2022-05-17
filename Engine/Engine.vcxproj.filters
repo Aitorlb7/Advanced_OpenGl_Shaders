@@ -16,6 +16,21 @@
     <Filter Include="Stb">
       <UniqueIdentifier>{0ac2ff0f-5f18-480a-8bd6-6aa7428166bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Tools">
+      <UniqueIdentifier>{928ecf38-f3e0-401b-b48f-2d4bffef38ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Entity">
+      <UniqueIdentifier>{452c987e-1656-4c6c-8479-3e8fba48dab1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Entity\Components">
+      <UniqueIdentifier>{720b8311-c45f-454e-aa1d-24ecf6149a8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Lights">
+      <UniqueIdentifier>{4dcf0d5f-4e21-409f-8c56-6a8cbcf139be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Camera">
+      <UniqueIdentifier>{eee714e3-197b-4adf-bbc8-8373be5aee92}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\imgui-docking\imgui.cpp">
@@ -50,6 +65,27 @@
     </ClCompile>
     <ClCompile Include="ThirdParty\stb\stb.cpp">
       <Filter>Stb</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\assimp_model_loading.cpp">
+      <Filter>Engine\Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\buffer_management.cpp">
+      <Filter>Engine\Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Material.cpp">
+      <Filter>Engine\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Mesh.cpp">
+      <Filter>Engine\Entity\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Entity.cpp">
+      <Filter>Engine\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Camera.cpp">
+      <Filter>Engine\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Light.cpp">
+      <Filter>Engine\Lights</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +127,27 @@
     </ClInclude>
     <ClInclude Include="ThirdParty\stb\stb_image.h">
       <Filter>Stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\assimp_model_loading.h">
+      <Filter>Engine\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Entity.h">
+      <Filter>Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Material.h">
+      <Filter>Engine\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Mesh.h">
+      <Filter>Engine\Entity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\buffer_management.h">
+      <Filter>Engine\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Camera.h">
+      <Filter>Engine\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Light.h">
+      <Filter>Engine\Lights</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,49 +1,70 @@
-//
-// engine.h: This file contains the types and functions relative to the engine.
-//
 
 #pragma once
 
 #include "platform.h"
 #include <glad/glad.h>
+#include "Material.h"
+#include "Mesh.h"
+#include "Camera.h"
 
-typedef glm::vec2  vec2;
-typedef glm::vec3  vec3;
-typedef glm::vec4  vec4;
-typedef glm::ivec2 ivec2;
-typedef glm::ivec3 ivec3;
-typedef glm::ivec4 ivec4;
 
-struct Image
+class GameObject;
+class Light;
+class Entity;
+
+
+struct Buffer
 {
-    void* pixels;
-    ivec2 size;
-    i32   nchannels;
-    i32   stride;
+    GLuint handle;
+    GLenum type;
+    u32 size;
+    u32 head;
+    void* data;
 };
 
-struct Texture
+struct VertexShaderAttribute
 {
-    GLuint      handle;
-    std::string filepath;
+    u8 location;
+    u8 componentCount;
 };
+struct VertexShaderLayout
+{
+    std::vector<VertexShaderAttribute> attributes;
+};
+
 
 struct Program
 {
     GLuint             handle;
     std::string        filepath;
     std::string        programName;
-    u64                lastWriteTimestamp; // What is this for?
+    u64                lastWriteTimestamp;
+
+    VertexShaderLayout vertexInputLayout;
 };
 
 enum Mode
 {
-    Mode_TexturedQuad,
-    Mode_Count
+    TEXTURED_GEOMETRY,
+    TEXTURED_MESH,
+    NONE
+};
+
+struct VertexV3V2
+{
+    glm::vec3 pos;
+    glm::vec2 uv;
+};
+
+struct Model
+{
+    u32 meshIdx;
+    std::vector<u32> materialIdx;
 };
 
 struct App
 {
+
     // Loop
     f32  deltaTime;
     bool isRunning;
@@ -57,11 +78,26 @@ struct App
 
     ivec2 displaySize;
 
+    u32 globalParamsOffset = 0;
+    u32 globalParamsSize = 0;
+
+    std::vector<Light*> lights;
+    std::vector<Entity*> entities;
+    std::vector<Mesh>     meshes;
+    std::vector<Model>    models;
     std::vector<Texture>  textures;
+    std::vector<Material> materials;
     std::vector<Program>  programs;
+
+    Camera camera;
+    float cameraMoveSpeed = 30.f;
+
+    mat4 worldMatrix;
+    mat4 worldViewProjectionMatrix;
 
     // program indices
     u32 texturedGeometryProgramIdx;
+    u32 texturedMeshProgramIdx;
     
     // texture indices
     u32 diceTexIdx;
@@ -69,9 +105,13 @@ struct App
     u32 blackTexIdx;
     u32 normalTexIdx;
     u32 magentaTexIdx;
+    u32 patrickTexIdx;
 
     // Mode
     Mode mode;
+
+    //Buffer
+    Buffer buffer;
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)
@@ -80,6 +120,9 @@ struct App
 
     // Location of the texture uniform in the textured quad shader
     GLuint programUniformTexture;
+
+    GLint maxUniformBufferSize;
+    GLint uniformBlockAlignment;
 
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
@@ -92,4 +135,19 @@ void Gui(App* app);
 void Update(App* app);
 
 void Render(App* app);
+
+GLuint GetVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
+
+void LoadQuad(App* app);
+
+void LoadModel(App* app);
+
+mat4 TransformScale(const vec3& scaleFactors);
+
+mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactor);
+
+void HandleInput(App* app);
+
+u32 LoadTexture2D(App* app, const char* filepath);
+
 
