@@ -99,38 +99,43 @@ layout(location=0) out vec4 oColor;
 
 void main()
 {
-	vec4 outputColor = vec4(0.0);
+	oColor = texture(textureSampler, vTexCoord);
+
+	vec3 outputColor = vec3(0.0);
 
 	for(unsigned int i = 0; i < uLightCount; i++)
     {
 		if(uLight[i].type == 0)
 		{
-			vec3 lightDir = normalize(uLight[i].direction);
-
-			vec3 reflectDir = reflect(lightDir, normalize(vNormal));
+			vec3 lightDir = normalize(-uLight[i].direction);
+			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+			vec3 reflectDir = reflect(-lightDir, normalize(vNormal));
 		
 			//Specular
 			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 32);
-			vec4 resultSpecular =  0.1 * spec * vec4(uLight[i].color,1.0); 
 
 			//Diffuse  
-			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
-			vec4 resultDiffuse = diff * vec4(uLight[i].color,1.0);
+			
+			vec3 resultSpecular =   spec * uLight[i].color * vec3(oColor.xyz); 
+			vec3 resultDiffuse = diff * uLight[i].color * vec3(oColor.xyz);
+			vec3 ambient = (uLight[i].color * 0.2) * vec3(oColor.xyz);
+			//
 
-			outputColor += resultSpecular + resultDiffuse;
+			oColor += (resultSpecular + resultDiffuse + ambient ) ;
+
 		}
 		else
 		{
 			 vec3 lightDir = normalize(uLight[i].position - vPosition);
-			 vec3 reflectDir = reflect(-lightDir, vNormal);
+			 vec3 reflectDir = reflect(lightDir, vNormal);
 			 
 			//Diffuse  
 			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
-			vec4 resultDiffuse = diff * vec4(uLight[i].color,1.0);
+			vec3 resultDiffuse = diff * uLight[i].color;
 
 			//Specular
 			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 32);
-			vec4 resultSpecular =  0.1 * spec * vec4(uLight[i].color,1.0); 
+			vec3 resultSpecular =  0.1 * spec * uLight[i].color; 
 
 			// attenuation
 			 float distance = length(uLight[i].position - vPosition);
@@ -138,16 +143,15 @@ void main()
 			float attenuation = 1.0 / (1.0 + 0.09 * distance + 
   			     0.032 * (distance * distance)); 
 				 
-			outputColor += (resultSpecular + resultDiffuse) * attenuation ;
+			outputColor += (resultSpecular + resultDiffuse) * attenuation;
+
 		}
-
-
        
     }
 
-	oColor = texture(textureSampler, vTexCoord);
+
 		
-	oColor = oColor * outputColor;
+	//oColor = oColor * vec4(outputColor,1.0);
 
 }
 
