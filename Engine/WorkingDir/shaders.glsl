@@ -99,7 +99,7 @@ layout(location=0) out vec4 oColor;
 
 void main()
 {
-	oColor = texture(textureSampler, vTexCoord);
+	vec4 texColor = texture(textureSampler, vTexCoord);
 
 	vec3 outputColor = vec3(0.0);
 
@@ -107,51 +107,49 @@ void main()
     {
 		if(uLight[i].type == 0)
 		{
-			vec3 lightDir = normalize(-uLight[i].direction);
-			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+			vec3 lightDir = normalize(uLight[i].direction);
 			vec3 reflectDir = reflect(-lightDir, normalize(vNormal));
-		
-			//Specular
-			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 32);
-
-			//Diffuse  
 			
-			vec3 resultSpecular =   spec * uLight[i].color * vec3(oColor.xyz); 
-			vec3 resultDiffuse = diff * uLight[i].color * vec3(oColor.xyz);
-			vec3 ambient = (uLight[i].color * 0.2) * vec3(oColor.xyz);
+			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 0.8);  
+			
+			vec3 resultSpecular =   spec * uLight[i].color * texColor.xyz * 0.2; 
+			vec3 resultDiffuse = diff * uLight[i].color * texColor.xyz * 0.7;
+			vec3 ambient = uLight[i].color * texColor.xyz * 0.2;
 			//
 
-			oColor += (resultSpecular + resultDiffuse + ambient ) ;
+			outputColor += (resultSpecular + resultDiffuse + ambient ) ;
 
 		}
-		else
+		else if(uLight[i].type == 1)
 		{
 			 vec3 lightDir = normalize(uLight[i].position - vPosition);
-			 vec3 reflectDir = reflect(lightDir, vNormal);
+			 vec3 reflectDir = reflect(-lightDir,  normalize(vNormal));
 			 
-			//Diffuse  
 			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
-			vec3 resultDiffuse = diff * uLight[i].color;
-
-			//Specular
-			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 32);
-			vec3 resultSpecular =  0.1 * spec * uLight[i].color; 
+			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 0.8);
+			
+			vec3 resultDiffuse = diff * uLight[i].color * texColor.xyz * 0.7;
+			vec3 resultSpecular =  spec * uLight[i].color * texColor.xyz * 0.2; 
+			vec3 resultAmbient = uLight[i].color * texColor.xyz * 0.2;
 
 			// attenuation
-			 float distance = length(uLight[i].position - vPosition);
+			float distance = length(uLight[i].position - vPosition);
 
 			float attenuation = 1.0 / (1.0 + 0.09 * distance + 
   			     0.032 * (distance * distance)); 
+
+			resultAmbient  *= attenuation;
+			resultDiffuse  *= attenuation;
+			resultSpecular *= attenuation;
 				 
-			outputColor += (resultSpecular + resultDiffuse) * attenuation;
+			outputColor += (resultSpecular + resultDiffuse + resultAmbient);
 
 		}
        
     }
-
-
 		
-	//oColor = oColor * vec4(outputColor,1.0);
+	oColor = vec4(outputColor,1.0);
 
 }
 

@@ -203,10 +203,9 @@ void Init(App* app)
     glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &app->uniformBlockAlignment);
 
 
-
     //TODO max size buffers
 
-    app->camera.SetAspectRatio(app->displaySize.x / app->displaySize.y);
+    app->camera.SetAspectRatio((float)app->displaySize.x / (float)app->displaySize.y);
 
     app->camera.SetProjectionMatrix(glm::radians(60.0f));
 
@@ -217,8 +216,8 @@ void Init(App* app)
     app->entities.push_back(new Entity("Patrick2", TransformPositionScale(vec3(0.f, 0.f, 0.f), vec3(1.f)), vec3(0.f, 0.f, 0.f)));
     app->entities.push_back(new Entity("Patrick3", TransformPositionScale(vec3(-5.f, 0.f, -5.f), vec3(1.f)), vec3(-5.f, 0.f, -5.f)));
 
-    app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(0.0f, 1.0f, 0.0f), vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f)));
-    //app->lights.push_back(new Light(LIGHT_POINT, vec3(0.5f, 0.0f, 0.0f), vec3(20.0f, 20.0f, -2.0f), vec3(20.0f, 20.0f, 0.0f)));
+    app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f)));
+    app->lights.push_back(new Light(LIGHT_POINT, vec3(0.5f, 0.0f, 0.0f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 3.0f, -2.0f)));
 
 
     switch (app->mode)
