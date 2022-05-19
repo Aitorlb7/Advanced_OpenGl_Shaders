@@ -105,13 +105,23 @@ struct App
     u32 blackTexIdx;
     u32 normalTexIdx;
     u32 magentaTexIdx;
-    u32 patrickTexIdx;
+
+
+    u32 modelPatrickId;
+    u32 modelSphereId;
 
     // Mode
     Mode mode;
 
     //Buffer
     Buffer buffer;
+
+    //Framebuffer
+    GLuint framebufferVAO;
+    GLuint framebufferHandle;
+    GLuint depthAttachmentHandle;
+    GLuint colorAttachmentHandle;
+    u32 drawFramebufferProgramIdx;
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)
@@ -127,6 +137,7 @@ struct App
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
 };
+void InitFramebuffer(App* app);
 
 void Init(App* app);
 
@@ -149,5 +160,6 @@ mat4 TransformPositionScale(const vec3& pos, const vec3& scaleFactor);
 void HandleInput(App* app);
 
 u32 LoadTexture2D(App* app, const char* filepath);
+
 
 

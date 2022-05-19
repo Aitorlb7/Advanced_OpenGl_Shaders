@@ -6,22 +6,8 @@
 #include "assimp_model_loading.h"
 #include "buffer_management.h"
 #include "Entity.h"
+#include "Sphere.h"
 #include "Light.h"
-
-
-const VertexV3V2 vertices[] = {
-
-    { glm::vec3(-0.5, -0.5, 0.0), glm::vec2(0.0,0.0)},
-    { glm::vec3(0.5, -0.5, 0.0), glm::vec2(1.0,0.0)},
-    { glm::vec3(0.5, 0.5, 0.0), glm::vec2(1.0,1.0)},
-    { glm::vec3(-0.5, 0.5, 0.0), glm::vec2(0.0,1.0)}
-};
-
-const u16 indices[] = {
-    0, 1, 2,
-    0, 2, 3
-};
-
 
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
 {
@@ -191,12 +177,115 @@ u32 LoadTexture2D(App* app, const char* filepath)
     }
 }
 
+void InitFramebuffer(App* app)
+{
+    //Create QUAD to render
+    VertexV3V2 vertices[] = {
+        {glm::vec3(-1.0,-1.0,0.0),glm::vec2(0.0,0.0)},
+        {glm::vec3(1.0,-1.0,0.0),glm::vec2(1.0,0.0) },
+        {glm::vec3(1.0,1.0,0.0),glm::vec2(1.0,1.0) },
+        {glm::vec3(-1.0,1.0,0.0),glm::vec2(0.0,1.0) },
+    };
+
+    u16 indices[] = {
+        0,1,2,
+        0,2,3
+    };
+
+    glGenBuffers(1, &app->embeddedVertices);
+    glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glGenBuffers(1, &app->embeddedElements);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glGenVertexArrays(1, &app->framebufferVAO);
+    glBindVertexArray(app->framebufferVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexV3V2), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexV3V2), (void*)12);
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
+    glBindVertexArray(0);
+
+    app->drawFramebufferProgramIdx = LoadProgram(app, "shaders.glsl", "QUAD");
+    Program& program = app->programs[app->drawFramebufferProgramIdx];
+    app->programUniformTexture = glGetUniformLocation(program.handle, "textureSampler");
+
+    if (app->programUniformTexture == GL_INVALID_VALUE || app->programUniformTexture == GL_INVALID_OPERATION)
+    {
+        ILOG("Framebuffer program loading error");
+    }
+
+    //Set up framebuffers
+
+    app->colorAttachmentHandle;
+    glGenTextures(1, &app->colorAttachmentHandle);
+    glBindTexture(GL_TEXTURE_2D, app->colorAttachmentHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    app->depthAttachmentHandle;
+    glGenTextures(1, &app->depthAttachmentHandle);
+    glBindTexture(GL_TEXTURE_2D, app->depthAttachmentHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, app->displaySize.x, app->displaySize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    app->framebufferHandle;
+    glGenFramebuffers(1, &app->framebufferHandle);
+    glBindFramebuffer(GL_FRAMEBUFFER, app->framebufferHandle);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, app->colorAttachmentHandle, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, app->depthAttachmentHandle, 0);
+
+    GLenum framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
+    {
+        switch (framebufferStatus)
+        {
+        case GL_FRAMEBUFFER_UNDEFINED: ELOG("GL_FRAMEBUFFER_UNDEFINED"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: ELOG("GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: ELOG("GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER: ELOG("GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER: ELOG("GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER"); break;
+        case GL_FRAMEBUFFER_UNSUPPORTED: ELOG("GL_FRAMEBUFFER_UNSUPPORTED"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE: ELOG("GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE"); break;
+        case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS: ELOG("GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS"); break;
+        default: ELOG("Unknown framebuffer status error");
+        }
+    }
+
+    glDrawBuffers(1, &app->colorAttachmentHandle);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+
 
 void Init(App* app)
 {
     glEnable(GL_DEPTH_TEST);
 
     app->mode = Mode::TEXTURED_MESH;
+
+
+    app->diceTexIdx = LoadTexture2D(app, "dice.png");
+    app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
+    app->blackTexIdx = LoadTexture2D(app, "color_black.png");
+    app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
+    app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
 
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
@@ -212,13 +301,29 @@ void Init(App* app)
     app->worldMatrix = TransformPositionScale(vec3(0.f, 1.f, 0.f), vec3(1.f)); //arbitrary position of the model, later should take th entitie's position
     app->worldViewProjectionMatrix = app->camera.GetProjection() * app->camera.GetView() * app->worldMatrix;
 
-    app->entities.push_back(new Entity("Patrick1", TransformPositionScale(vec3(5.f, 0.f, -5.f), vec3(1.f)), vec3(5.f, 0.f, -5.f)));
-    app->entities.push_back(new Entity("Patrick2", TransformPositionScale(vec3(0.f, 0.f, 0.f), vec3(1.f)), vec3(0.f, 0.f, 0.f)));
-    app->entities.push_back(new Entity("Patrick3", TransformPositionScale(vec3(-5.f, 0.f, -5.f), vec3(1.f)), vec3(-5.f, 0.f, -5.f)));
+    
+
+
+    app->entities.push_back(new Entity("Patrick1", EntityType::MODEL, TransformPositionScale(vec3(5.f, 0.f, -5.f), vec3(1.f)), vec3(5.f, 0.f, -5.f)));
+    app->entities.push_back(new Entity("Patrick2", EntityType::MODEL, TransformPositionScale(vec3(0.f, 0.f, 0.f), vec3(1.f)), vec3(0.f, 0.f, 0.f)));
+    app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, TransformPositionScale(vec3(-5.f, 0.f, -5.f), vec3(1.f)), vec3(-5.f, 0.f, -5.f)));
+
+
+    Sphere* newSphere = new Sphere("Sphere", TransformPositionScale(vec3(0.f, 5.f, 0.f), vec3(1.f)), vec3(0.f, 5.f, 0.f));
+    app->entities.push_back(newSphere);
+
+    //TODO Check why the order changes all entitites!!!!!
+    
+    app->modelPatrickId = ModelLoader::LoadModel(app, "Patrick/Patrick.obj");
+    
+    app->modelSphereId = newSphere->LoadSphere(app);
+
+
 
     app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f)));
     app->lights.push_back(new Light(LIGHT_POINT, vec3(0.5f, 0.0f, 0.0f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 3.0f, -2.0f)));
 
+    InitFramebuffer(app);
 
     switch (app->mode)
     {
@@ -227,11 +332,6 @@ void Init(App* app)
         case NONE: break;
     }
 
-    app->diceTexIdx = LoadTexture2D(app, "dice.png");
-    app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
-    app->blackTexIdx = LoadTexture2D(app, "color_black.png");
-    app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
-    app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
 }
 
@@ -273,6 +373,18 @@ void Update(App* app)
     HandleInput(app);
     //app->camera.SetViewMatrix(lookAt(app->camera.GetPosition(), app->camera.GetTarget(), vec3(0.f, 1.f, 0.f)));
     app->camera.SetViewMatrix(translate(app->camera.GetPosition()));
+
+
+    //Framebuffers before rendering
+    glBindFramebuffer(GL_FRAMEBUFFER, app->framebufferHandle);
+
+    GLuint drawBuffers[] = { app->colorAttachmentHandle };
+    glDrawBuffers(ARRAY_COUNT(drawBuffers), drawBuffers);
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
 
     MapBuffer(app->buffer, GL_WRITE_ONLY);
 
@@ -359,6 +471,14 @@ void Render(App* app)
                 glUseProgram(texturedMeshProgram.handle);
 
                 Model& model = app->models[0];
+
+                switch (app->entities[i]->GetType())
+                {
+                case EntityType::MODEL: model = app->models[app->modelPatrickId]; break;
+                case EntityType::SPHERE: model = app->models[app->modelSphereId]; break;
+                }
+
+                
                 Mesh& mesh = app->meshes[model.meshIdx];
 
                 for (u32 i = 0; i < mesh.GetSubMeshes().size(); ++i)
@@ -385,6 +505,33 @@ void Render(App* app)
 
         default:;
     }
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //After the meshes rendering
+    //Render Framebuffers to screen
+
+    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+
+    Program& geometryProgram = app->programs[app->drawFramebufferProgramIdx];
+    glUseProgram(geometryProgram.handle);
+    glBindVertexArray(app->framebufferVAO);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUniform1i(app->programUniformTexture, 0);
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindTexture(GL_TEXTURE_2D, app->colorAttachmentHandle);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+
 }
 
 GLuint GetVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
@@ -442,6 +589,18 @@ GLuint GetVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
 
 void LoadQuad(App* app)
 {
+    VertexV3V2 vertices[] = {
+    {glm::vec3(-1.0,-1.0,0.0),glm::vec2(0.0,0.0)},
+    {glm::vec3(1.0,-1.0,0.0),glm::vec2(1.0,0.0) },
+    {glm::vec3(1.0,1.0,0.0),glm::vec2(1.0,1.0) },
+    {glm::vec3(-1.0,1.0,0.0),glm::vec2(0.0,1.0) },
+    };
+
+    u16 indices[] = {
+        0,1,2,
+        0,2,3
+    };
+
     //Geometry buffers
 
     glGenBuffers(1, &app->embeddedVertices);
@@ -476,8 +635,6 @@ void LoadQuad(App* app)
 
 void LoadModel(App* app)
 {
-    app->patrickTexIdx = ModelLoader::LoadModel(app, "Patrick/Patrick.obj");
-
     app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "TEXTURED_MESH");
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
 

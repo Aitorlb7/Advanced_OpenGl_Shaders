@@ -1,11 +1,13 @@
 #include "Entity.h"
 
-Entity::Entity()
+Entity::Entity(): 
+	entityType(EntityType::MODEL)
 {
 }
 
-Entity::Entity(std::string name, glm::mat4 matrix, vec3 position):
+Entity::Entity(std::string name,EntityType type, glm::mat4 matrix, vec3 position):
 	name(name),
+	entityType(type),
 	worldMatrix(matrix),
 	position(position)
 {
