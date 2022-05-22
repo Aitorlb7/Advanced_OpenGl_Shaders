@@ -3,10 +3,12 @@
 #include <imgui.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
-#include "assimp_model_loading.h"
-#include "buffer_management.h"
+#include "AssimpLoader.h"
+#include "PrimitiveLoader.h"
+#include "BufferManager.h"
 #include "Entity.h"
 #include "Sphere.h"
+#include "Plane.h"
 #include "Light.h"
 
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
@@ -299,29 +301,24 @@ void Init(App* app)
     app->camera.SetProjectionMatrix(glm::radians(60.0f));
 
     app->worldMatrix = TransformPositionScale(vec3(0.f, 1.f, 0.f), vec3(1.f)); //arbitrary position of the model, later should take th entitie's position
-    app->worldViewProjectionMatrix = app->camera.GetProjection() * app->camera.GetView() * app->worldMatrix;
-
-    
+    app->worldViewProjectionMatrix = app->camera.GetProjection() * app->camera.GetView() * app->worldMatrix;    
 
 
     app->entities.push_back(new Entity("Patrick1", EntityType::MODEL, TransformPositionScale(vec3(5.f, 0.f, -5.f), vec3(1.f)), vec3(5.f, 0.f, -5.f)));
     app->entities.push_back(new Entity("Patrick2", EntityType::MODEL, TransformPositionScale(vec3(0.f, 0.f, 0.f), vec3(1.f)), vec3(0.f, 0.f, 0.f)));
     app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, TransformPositionScale(vec3(-5.f, 0.f, -5.f), vec3(1.f)), vec3(-5.f, 0.f, -5.f)));
+    app->entities.push_back(new Sphere("Sphere", TransformPositionScale(vec3(0.f, 5.f, 0.f), vec3(1.f)), vec3(0.f, 5.f, 0.f)));
+    app->entities.push_back(new Plane("Plane", TransformPositionScale(vec3(0.f, -3.5f, 0.f), vec3(15.f)), vec3(0.f, -5.f, 0.f)));
 
-
-    Sphere* newSphere = new Sphere("Sphere", TransformPositionScale(vec3(0.f, 5.f, 0.f), vec3(1.f)), vec3(0.f, 5.f, 0.f));
-    app->entities.push_back(newSphere);
-
-    //TODO Check why the order changes all entitites!!!!!
     
-    app->modelPatrickId = ModelLoader::LoadModel(app, "Patrick/Patrick.obj");
-    
-    app->modelSphereId = newSphere->LoadSphere(app);
+    app->modelPatrickId = ModelLoader::LoadModel(app, "Patrick/Patrick.obj"); 
+    app->modelSphereId = PrimitiveLoader::LoadSphere(app);
+    app->modelPlaneId = PrimitiveLoader::LoadPlane(app);
 
 
 
     app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f)));
-    app->lights.push_back(new Light(LIGHT_POINT, vec3(0.5f, 0.0f, 0.0f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 3.0f, -2.0f)));
+    app->lights.push_back(new Light(LIGHT_POINT, vec3(0.f, 0.f, 0.7f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 10.0f, -2.0f)));
 
     InitFramebuffer(app);
 
@@ -470,12 +467,14 @@ void Render(App* app)
                 Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
                 glUseProgram(texturedMeshProgram.handle);
 
-                Model& model = app->models[0];
+                Model model;
 
                 switch (app->entities[i]->GetType())
                 {
                 case EntityType::MODEL: model = app->models[app->modelPatrickId]; break;
                 case EntityType::SPHERE: model = app->models[app->modelSphereId]; break;
+                case EntityType::PLANE: model = app->models[app->modelPlaneId]; break;
+
                 }
 
                 

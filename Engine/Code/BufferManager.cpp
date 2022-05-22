@@ -1,4 +1,4 @@
-#include "buffer_management.h"
+#include "BufferManager.h"
 
 bool BufferManager::IsPowerOf2(u32 value)
 {

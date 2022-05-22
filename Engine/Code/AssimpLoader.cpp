@@ -1,5 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "assimp_model_loading.h"
+#include "AssimpLoader.h"
 #include "engine.h"
 #include "Mesh.h"
 #include "Material.h"

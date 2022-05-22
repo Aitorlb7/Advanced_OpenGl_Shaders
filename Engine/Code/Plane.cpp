@@ -12,7 +12,3 @@ Plane::Plane(std::string name, mat4 matrix, vec3 position) : Entity(name, Entity
 Plane::~Plane()
 {
 }
-
-void Plane::CreatePlaneProcedurally()
-{
-}

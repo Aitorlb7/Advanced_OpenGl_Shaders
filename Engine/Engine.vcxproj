@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Code\assimp_model_loading.cpp" />
-    <ClCompile Include="Code\buffer_management.cpp" />
+    <ClCompile Include="Code\AssimpLoader.cpp" />
+    <ClCompile Include="Code\BufferManager.cpp" />
     <ClCompile Include="Code\Camera.cpp" />
     <ClCompile Include="Code\engine.cpp" />
     <ClCompile Include="Code\Entity.cpp" />
@@ -29,6 +29,7 @@
     <ClCompile Include="Code\Mesh.cpp" />
     <ClCompile Include="Code\Plane.cpp" />
     <ClCompile Include="Code\platform.cpp" />
+    <ClCompile Include="Code\PrimitiveLoader.cpp" />
     <ClCompile Include="Code\Sphere.cpp" />
     <ClCompile Include="ThirdParty\glad\include\glad\glad.c" />
     <ClCompile Include="ThirdParty\imgui-docking\imgui.cpp" />
@@ -41,8 +42,8 @@
     <ClCompile Include="ThirdParty\stb\stb.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Code\assimp_model_loading.h" />
-    <ClInclude Include="Code\buffer_management.h" />
+    <ClInclude Include="Code\AssimpLoader.h" />
+    <ClInclude Include="Code\BufferManager.h" />
     <ClInclude Include="Code\Camera.h" />
     <ClInclude Include="Code\engine.h" />
     <ClInclude Include="Code\Entity.h" />
@@ -51,6 +52,7 @@
     <ClInclude Include="Code\Mesh.h" />
     <ClInclude Include="Code\Plane.h" />
     <ClInclude Include="Code\platform.h" />
+    <ClInclude Include="Code\PrimitiveLoader.h" />
     <ClInclude Include="Code\Sphere.h" />
     <ClInclude Include="ThirdParty\glad\include\glad\glad.h" />
     <ClInclude Include="ThirdParty\glad\include\glad\khrplatform.h" />

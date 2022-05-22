@@ -69,10 +69,10 @@
     <ClCompile Include="ThirdParty\stb\stb.cpp">
       <Filter>Stb</Filter>
     </ClCompile>
-    <ClCompile Include="Code\assimp_model_loading.cpp">
+    <ClCompile Include="Code\AssimpLoader.cpp">
       <Filter>Engine\Tools</Filter>
     </ClCompile>
-    <ClCompile Include="Code\buffer_management.cpp">
+    <ClCompile Include="Code\BufferManager.cpp">
       <Filter>Engine\Tools</Filter>
     </ClCompile>
     <ClCompile Include="Code\Material.cpp">
@@ -95,6 +95,9 @@
     </ClCompile>
     <ClCompile Include="Code\Sphere.cpp">
       <Filter>Engine\Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\PrimitiveLoader.cpp">
+      <Filter>Engine\Tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -137,7 +140,7 @@
     <ClInclude Include="ThirdParty\stb\stb_image.h">
       <Filter>Stb</Filter>
     </ClInclude>
-    <ClInclude Include="Code\assimp_model_loading.h">
+    <ClInclude Include="Code\AssimpLoader.h">
       <Filter>Engine\Tools</Filter>
     </ClInclude>
     <ClInclude Include="Code\Entity.h">
@@ -149,7 +152,7 @@
     <ClInclude Include="Code\Mesh.h">
       <Filter>Engine\Entity\Components</Filter>
     </ClInclude>
-    <ClInclude Include="Code\buffer_management.h">
+    <ClInclude Include="Code\BufferManager.h">
       <Filter>Engine\Tools</Filter>
     </ClInclude>
     <ClInclude Include="Code\Camera.h">
@@ -163,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="Code\Sphere.h">
       <Filter>Engine\Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\PrimitiveLoader.h">
+      <Filter>Engine\Tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

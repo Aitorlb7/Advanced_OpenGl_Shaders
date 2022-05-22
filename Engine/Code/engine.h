@@ -50,6 +50,8 @@ enum Mode
     NONE
 };
 
+struct PrimitiveVertex { vec3 pos; vec3 normals; };
+
 struct VertexV3V2
 {
     glm::vec3 pos;
@@ -109,6 +111,7 @@ struct App
 
     u32 modelPatrickId;
     u32 modelSphereId;
+    u32 modelPlaneId;
 
     // Mode
     Mode mode;
