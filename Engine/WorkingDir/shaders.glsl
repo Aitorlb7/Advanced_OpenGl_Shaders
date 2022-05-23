@@ -86,7 +86,6 @@ in vec3 vPosition;
 in vec3 vNormal;
 in vec3 vViewDir;
 
-uniform sampler2D textureSampler;
 
 layout(binding = 0,std140) uniform GlobalParams 
 {
@@ -95,61 +94,73 @@ layout(binding = 0,std140) uniform GlobalParams
 	Light uLight[10];
 };
 
-layout(location=0) out vec4 oColor;
+//layout(location=0) out vec4 oColor;
+
+uniform sampler2D textureSampler;
+
+layout (location = 0) out vec3 glPosOut;
+layout (location = 1) out vec3 diffuseOut;
+layout (location = 2) out vec3 normalOut;
+layout (location = 3) out vec3 depthOut;
 
 void main()
 {
-	vec4 texColor = texture(textureSampler, vTexCoord);
+//	vec4 texColor = texture(textureSampler, vTexCoord);
+//
+//	vec3 outputColor = vec3(0.0);
+//
+//	for(unsigned int i = 0; i < uLightCount; i++)
+//    {
+//		if(uLight[i].type == 0)
+//		{
+//			vec3 lightDir = normalize(uLight[i].direction);
+//			vec3 reflectDir = reflect(-lightDir, normalize(vNormal));
+//			
+//			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+//			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 0.8);  
+//			
+//			vec3 resultSpecular =   spec * uLight[i].color * texColor.xyz * 0.2; 
+//			vec3 resultDiffuse = diff * uLight[i].color * texColor.xyz * 0.7;
+//			vec3 ambient = uLight[i].color * texColor.xyz * 0.2;
+//			//
+//
+//			outputColor += (resultSpecular + resultDiffuse + ambient ) ;
+//
+//		}
+//		else if(uLight[i].type == 1)
+//		{
+//			 vec3 lightDir = normalize(uLight[i].position - vPosition);
+//			 vec3 reflectDir = reflect(-lightDir,  normalize(vNormal));
+//			 
+//			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+//			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 0.8);
+//			
+//			vec3 resultDiffuse = diff * uLight[i].color * texColor.xyz * 0.7;
+//			vec3 resultSpecular =  spec * uLight[i].color * texColor.xyz * 0.2; 
+//			vec3 resultAmbient = uLight[i].color * texColor.xyz * 0.2;
+//
+//			// attenuation
+//			float distance = length(uLight[i].position - vPosition);
+//
+//			float attenuation = 1.0 / (1.0 + 0.09 * distance + 
+//  			     0.032 * (distance * distance)); 
+//
+//			resultAmbient  *= attenuation;
+//			resultDiffuse  *= attenuation;
+//			resultSpecular *= attenuation;
+//				 
+//			outputColor += (resultSpecular + resultDiffuse + resultAmbient);
+//
+//		}
+//       
+//    }
+//		
+//	oColor = vec4(outputColor,1.0);
 
-	vec3 outputColor = vec3(0.0);
-
-	for(unsigned int i = 0; i < uLightCount; i++)
-    {
-		if(uLight[i].type == 0)
-		{
-			vec3 lightDir = normalize(uLight[i].direction);
-			vec3 reflectDir = reflect(-lightDir, normalize(vNormal));
-			
-			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
-			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 0.8);  
-			
-			vec3 resultSpecular =   spec * uLight[i].color * texColor.xyz * 0.2; 
-			vec3 resultDiffuse = diff * uLight[i].color * texColor.xyz * 0.7;
-			vec3 ambient = uLight[i].color * texColor.xyz * 0.2;
-			//
-
-			outputColor += (resultSpecular + resultDiffuse + ambient ) ;
-
-		}
-		else if(uLight[i].type == 1)
-		{
-			 vec3 lightDir = normalize(uLight[i].position - vPosition);
-			 vec3 reflectDir = reflect(-lightDir,  normalize(vNormal));
-			 
-			float diff = max(dot(normalize(vNormal), lightDir), 0.0);
-			float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 0.8);
-			
-			vec3 resultDiffuse = diff * uLight[i].color * texColor.xyz * 0.7;
-			vec3 resultSpecular =  spec * uLight[i].color * texColor.xyz * 0.2; 
-			vec3 resultAmbient = uLight[i].color * texColor.xyz * 0.2;
-
-			// attenuation
-			float distance = length(uLight[i].position - vPosition);
-
-			float attenuation = 1.0 / (1.0 + 0.09 * distance + 
-  			     0.032 * (distance * distance)); 
-
-			resultAmbient  *= attenuation;
-			resultDiffuse  *= attenuation;
-			resultSpecular *= attenuation;
-				 
-			outputColor += (resultSpecular + resultDiffuse + resultAmbient);
-
-		}
-       
-    }
-		
-	oColor = vec4(outputColor,1.0);
+	glPosOut = vPosition;
+    diffuseOut = texture(textureSampler, vTexCoord).xyz;
+    normalOut = normalize(vNormal);
+    depthOut = vec3(vTexCoord, 0.0);
 
 }
 

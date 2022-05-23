@@ -50,6 +50,15 @@ enum Mode
     NONE
 };
 
+enum GBUFFER {
+    POSITION,
+    DIFFUSE,
+    NORMAL,
+    DEPTH,
+    MAX
+};
+
+
 struct PrimitiveVertex { vec3 pos; vec3 normals; };
 
 struct VertexV3V2
@@ -125,6 +134,9 @@ struct App
     GLuint depthAttachmentHandle;
     GLuint colorAttachmentHandle;
     u32 drawFramebufferProgramIdx;
+
+    GLuint gbufferTextures[MAX];
+
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)
