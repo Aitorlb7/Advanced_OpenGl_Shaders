@@ -98,10 +98,10 @@ layout(binding = 0,std140) uniform GlobalParams
 
 uniform sampler2D textureSampler;
 
-layout (location = 0) out vec3 glPosOut;
-layout (location = 1) out vec3 diffuseOut;
-layout (location = 2) out vec3 normalOut;
-layout (location = 3) out vec3 depthOut;
+layout (location = 0) out vec4 glPosOut;
+layout (location = 1) out vec4 normalOut;
+layout (location = 2) out vec4 diffuseOut;
+layout (location = 3) out vec4 depthOut;
 
 void main()
 {
@@ -157,10 +157,11 @@ void main()
 //		
 //	oColor = vec4(outputColor,1.0);
 
-	glPosOut = vPosition;
-    diffuseOut = texture(textureSampler, vTexCoord).xyz;
-    normalOut = normalize(vNormal);
-    depthOut = vec3(vTexCoord, 0.0);
+	glPosOut = vec4(vPosition,1.0);
+    diffuseOut = vec4(texture(textureSampler, vTexCoord).xyz,1.0);
+    normalOut = vec4( normalize(vNormal),1.0);
+    depthOut = vec4(vTexCoord,0.0,1.0);
+
 
 }
 
