@@ -135,6 +135,11 @@ struct App
     GLuint colorAttachmentHandle;
     u32 drawFramebufferProgramIdx;
 
+    GLuint Gbuffer;
+    GLuint GAlbedo;
+    GLuint GPosition;
+    GLuint GNormal;
+    GLuint GDepth;
     GLuint gbufferTextures[MAX];
 
 
