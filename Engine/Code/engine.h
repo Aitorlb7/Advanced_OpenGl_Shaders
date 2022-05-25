@@ -50,12 +50,12 @@ enum Mode
     NONE
 };
 
-enum GBUFFER {
+enum RenderTarget {
     POSITION,
     DIFFUSE,
     NORMAL,
     DEPTH,
-    MAX
+    FINAL
 };
 
 
@@ -140,8 +140,10 @@ struct App
     GLuint GPosition;
     GLuint GNormal;
     GLuint GDepth;
-    GLuint gbufferTextures[MAX];
+    GLuint GFinal;
 
+    RenderTarget renderTarget;
+    const char* renderTargetsChar[5] = { "Position", "Normals", "Albedo", "Depth", "Final"};
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)
