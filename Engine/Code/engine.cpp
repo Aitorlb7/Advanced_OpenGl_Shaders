@@ -179,11 +179,9 @@ u32 LoadTexture2D(App* app, const char* filepath)
     }
 }
 
-bool InitGBuffers(App* app)
+void CreateQuadToRender(App* app)
 {
-
-
-        //Create QUAD to render
+    //Create QUAD to render
     VertexV3V2 vertices[] = {
         {glm::vec3(-1.0,-1.0,0.0),glm::vec2(0.0,0.0)},
         {glm::vec3(1.0,-1.0,0.0),glm::vec2(1.0,0.0) },
@@ -229,7 +227,10 @@ bool InitGBuffers(App* app)
         ILOG("Framebuffer program loading error");
     }
 
-    
+}
+
+void InitGBuffers(App* app)
+{   
 
     // - position color buffer
     glGenTextures(1, &app->GPosition);
@@ -328,12 +329,27 @@ bool InitGBuffers(App* app)
     }
 
 
-    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
     glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
 
-    return true;
+void SetUpDeferredShading(App* app)
+{
+    app->directionalLightProgramIdx = LoadProgram(app, "shaders.glsl", "DIRECTIONAL_LIGHT");
+    Program& directionalProgram = app->programs[app->directionalLightProgramIdx];
+    app->directionalUniformPosition = glGetUniformLocation(directionalProgram.handle, "positionOut");
+    app->directionalUniformNormal = glGetUniformLocation(directionalProgram.handle, "normalOut");
+    app->directionalUniformDiffuse = glGetUniformLocation(directionalProgram.handle, "diffuseOut");
+    app->directionalUniformDepth =  glGetUniformLocation(directionalProgram.handle, "depthOut");
+
+    app->pointLightProgramIdx = LoadProgram(app, "shaders.glsl", "POINT_LIGHT");
+    Program& pointProgram = app->programs[app->pointLightProgramIdx];
+    app->pointUniformPosition = glGetUniformLocation(pointProgram.handle, "positionOut");
+    app->pointUniformNormal = glGetUniformLocation(pointProgram.handle, "normalOut");
+    app->pointUniformDiffuse = glGetUniformLocation(pointProgram.handle, "diffuseOut");
+    app->pointUniformDepth = glGetUniformLocation(pointProgram.handle, "depthOut");
 }
 
 void Init(App* app)
@@ -377,10 +393,12 @@ void Init(App* app)
     app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 0.0f, 0.0f)));
     app->lights.push_back(new Light(LIGHT_POINT, vec3(0.f, 0.f, 0.7f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 10.0f, -2.0f)));
 
-
+    CreateQuadToRender(app);
+    SetUpDeferredShading(app);
     InitGBuffers(app);
+    app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "TEXTURED_MESH");
 
-    app->renderTarget = RenderTarget::FINAL;
+    app->renderTarget = RenderTarget::POSITION;
 
     switch (app->mode)
     {
@@ -447,25 +465,19 @@ void Update(App* app)
     app->camera.SetViewMatrix(translate(app->camera.GetPosition()));
 
 
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->GFinal);
+    glDrawBuffer(GL_COLOR_ATTACHMENT4);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     MapBuffer(app->buffer, GL_WRITE_ONLY);
 
     //Initialize global uniforms
     app->globalParamsOffset = app->buffer.head;
 
     PushVec3(app->buffer, app->camera.GetPosition());
-
-    PushUInt(app->buffer, app->lights.size());
-
-    for (u32 i = 0; i < app->lights.size(); ++i)
-    {
-        AlignHead(app->buffer, sizeof(vec4));
-
-        Light* light = app->lights[i];
-        PushUInt(app->buffer, light->GetType());
-        PushVec3(app->buffer, light->GetColor());
-        PushVec3(app->buffer, light->GetDirection());
-        PushVec3(app->buffer, light->GetPosition());
-    }
+    PushFloat(app->buffer, app->camera.GetNearPlane());
+    PushFloat(app->buffer, app->camera.GetFarPlane());
+ 
 
     app->globalParamsSize = app->buffer.head - app->globalParamsOffset;
 
@@ -478,6 +490,16 @@ void Update(App* app)
 
         PushMat4(app->buffer, app->entities[i]->GetWorldMatrix());
         PushMat4(app->buffer, app->camera.GetProjection() * app->camera.GetView() * app->entities[i]->GetWorldMatrix());
+
+        for (u32 i = 0; i < app->lights.size(); ++i)
+        {
+            AlignHead(app->buffer, sizeof(vec4));
+
+            Light* light = app->lights[i];
+            PushVec3(app->buffer, light->GetColor());
+            PushVec3(app->buffer, light->GetDirection());
+            PushVec3(app->buffer, light->GetPosition());
+        }
 
         app->entities[i]->SetLocalParamsSize(app->buffer.head - app->entities[i]->GetLocalParamsOffset());
     }
@@ -546,13 +568,54 @@ void GeometryPass(App* app)
 void LightPass(App* app)
 {
 
+    if (app->renderTarget == RenderTarget::FINAL)
+    {
+        for (u32 i = 0; i < app->lights.size(); ++i)
+        {
+            Light* light = app->lights[i];
+
+            switch (light->GetType())
+            {
+            case LightType::LIGHT_DIRECTIONAL:
+            {
+                Program& program = app->programs[app->directionalLightProgramIdx];
+                glUseProgram(program.handle);
+
+                glBindBufferRange(GL_UNIFORM_BUFFER, 1, app->buffer.handle, app->lights[i]->GetLocalParamsOffset(), app->lights[i]->GetLocalParamsSize());
+
+                glUniform1i(app->directionalUniformPosition, 0);
+                glUniform1i(app->directionalUniformNormal, 1);
+                glUniform1i(app->directionalUniformDiffuse, 2);
+                glUniform1i(app->directionalUniformDepth, 3);
 
 
-    //glEnable(GL_BLEND);
-    //glBlendEquation(GL_FUNC_ADD);
-    //glBlendFunc(GL_ONE, GL_ONE);
+                break;
 
-    //glBindFramebuffer(GL_READ_FRAMEBUFFER, app->Gbuffer);
+            }
+            case LightType::LIGHT_POINT:
+            {
+                Program& program = app->programs[app->pointLightProgramIdx];
+                glUseProgram(program.handle);
+
+                glBindBufferRange(GL_UNIFORM_BUFFER, 1, app->buffer.handle, app->lights[i]->GetLocalParamsOffset(), app->lights[i]->GetLocalParamsSize());
+
+
+                glUniform1i(app->directionalUniformPosition, 0);
+                glUniform1i(app->directionalUniformNormal, 1);
+                glUniform1i(app->directionalUniformDiffuse, 2);
+                glUniform1i(app->directionalUniformDepth, 3);
+
+
+                break;
+            }
+
+            }
+
+        }
+    }
+
+    
+
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, app->GPosition);
@@ -564,6 +627,7 @@ void LightPass(App* app)
     glBindTexture(GL_TEXTURE_2D, app->GDepth);
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, app->GFinal);
+    glBindTexture(GL_TEXTURE_2D, app->depthAttachmentHandle);
 }
 
 
@@ -574,7 +638,7 @@ void Render(App* app)
     
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->Gbuffer);
 
-    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
     glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
 
     glDepthMask(GL_TRUE);
@@ -598,6 +662,17 @@ void Render(App* app)
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT4);
+   
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
     LightPass(app);
@@ -727,7 +802,7 @@ void LoadQuad(App* app)
 
 void LoadModel(App* app)
 {
-    app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "TEXTURED_MESH");
+
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
 
     int attributeCount = 0;

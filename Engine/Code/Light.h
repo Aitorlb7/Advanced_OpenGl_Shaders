@@ -21,10 +21,19 @@ public:
     inline const vec3 GetDirection() const { return direction; };
     inline const LightType GetType() const { return type; };
 
+    inline const u32 GetLocalParamsOffset() const { return localParamsOffset; };
+    inline const u32 GetLocalParamsSize() const { return localParamsSize; };
+
+    inline void SetLocalParamsOffset(GLuint _localParamsOffset) { localParamsOffset = _localParamsOffset; };
+    inline void SetLocalParamsSize(GLuint _localParamsSize) { localParamsSize = _localParamsSize; };
+
 private:
     
     LightType type;
     vec3 color;
     vec3 direction;
     vec3 position;
+
+    u32 localParamsOffset = 0;
+    u32 localParamsSize = 0;
 };
