@@ -1,7 +1,7 @@
 #include "Camera.h"
 
 Camera::Camera():
-	position(vec3(0.0f, 0.0f, -20.0f)),
+	position(vec3(0.0f, 0.0f, 30.0f)),
 	target(vec3(0.0f, 0.0f, 0.0f)),
 	aspectRatio(0.0f),
 	nearPlane(0.1f),

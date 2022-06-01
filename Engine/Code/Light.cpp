@@ -7,11 +7,12 @@ Light::Light():
 {
 }
 
-Light::Light(LightType type, vec3 color, vec3 direction, vec3 position):
+Light::Light(LightType type, vec3 color, vec3 direction, vec3 position, mat4 worldMatrix):
 	type(type),
 	color(color),
 	direction(direction),
-	position(position)
+	position(position),
+	worldMatrix(worldMatrix)
 {}
 
 Light::~Light()

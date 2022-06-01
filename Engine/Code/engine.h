@@ -51,11 +51,11 @@ enum Mode
 };
 
 enum RenderTarget {
+    FINAL,
     POSITION,
-    DIFFUSE,
     NORMAL,
-    DEPTH,
-    FINAL
+    DIFFUSE,
+    DEPTH
 };
 
 
@@ -145,7 +145,8 @@ struct App
     GLuint GFinal;
 
     RenderTarget renderTarget;
-    const char* renderTargetsChar[5] = { "Position", "Normals", "Albedo", "Depth", "Final"};
+    u32 renderAttachment;
+    const char* renderTargetsChar[5] = {"Final", "Position", "Normals", "Albedo", "Depth" };
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)

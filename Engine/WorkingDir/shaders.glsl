@@ -39,12 +39,12 @@ void main()
 
 #ifdef TEXTURED_MESH
 
-layout(binding = 0,std140) uniform GlobalParams 
-{
-	vec3 uCameraPosition;
-	float nearPlane;
-	float farPlane;
-};
+#if defined(VERTEX) ///////////////////////////////////////////////////
+
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
+
 
 layout(binding = 1,std140) uniform LocalParams
 {
@@ -52,23 +52,15 @@ layout(binding = 1,std140) uniform LocalParams
 	mat4 uWorldViewProjectionMatrix;
 };
 
-#if defined(VERTEX) ///////////////////////////////////////////////////
-
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
-
 out vec2 vTexCoord;
 out vec3 vPosition;
 out vec3 vNormal;
-out vec3 vViewDir;
 
 void main()
 {
 	vTexCoord = aTexCoord;
 	vPosition = vec3(uWorldMatrix * vec4(aPosition,1.0));
 	vNormal = vec3(uWorldMatrix * vec4(aNormal,0.0));
-	vViewDir = normalize(uCameraPosition - vPosition);
 	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition,1.0);
 }
 
@@ -77,19 +69,29 @@ void main()
 in vec2 vTexCoord;
 in vec3 vPosition;
 in vec3 vNormal;
-in vec3 vViewDir;
 
 
 uniform sampler2D textureSampler;
 
-layout (location = 0) out vec4 positionOut;
-layout (location = 1) out vec4 normalOut;
-layout (location = 2) out vec4 diffuseOut;
-layout (location = 3) out vec4 depthOut;
+layout (location = 0) out vec4 finalOut;
+layout (location = 1) out vec4 positionOut;
+layout (location = 2) out vec4 normalOut;
+layout (location = 3) out vec4 diffuseOut;
+layout (location = 4) out vec4 depthOut;
+
+layout(binding = 0, std140) uniform GlobalParams
+{
+	vec3 uCameraPosition;
+	vec2 uCameraResolution;
+	float nearPlane;
+	float farPlane;
+
+};
+
 
 float LinearizeDepth(float depth) 
 {
-    float z = depth * 2.0 - 1.0; // back to NDC 
+    float z = depth * 2.0 - 1.0;
     return (2.0 * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));	
 }
 
@@ -98,9 +100,10 @@ void main()
 	float depth = LinearizeDepth( gl_FragCoord.z) / farPlane;
 
 	positionOut = vec4(vPosition,1.0);
-    diffuseOut = vec4(texture(textureSampler, vTexCoord).xyz,1.0);
+    diffuseOut = texture(textureSampler, vTexCoord);
     normalOut = vec4( normalize(vNormal),1.0);
     depthOut = vec4(vec3(depth),1.0);
+	finalOut = diffuseOut;
 }
 
 #endif
@@ -117,6 +120,22 @@ void main()
 
 #ifdef DIRECTIONAL_LIGHT
 
+#if defined(VERTEX) ///////////////////////////////////////////////////
+
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec2 aTexCoord;
+
+
+out vec2 vTexCoord;
+
+void main()
+{
+	vTexCoord = aTexCoord;
+	gl_Position = vec4(aPosition, 1.0);
+}
+
+#elif defined(FRAGMENT) ///////////////////////////////////////////////
+
 struct Light
 {
 	vec3 color;
@@ -124,67 +143,53 @@ struct Light
 	vec3 position;
 };
 
-layout(binding = 0, std140) uniform GlobalParams
-{
-	vec3 uCameraPosition;
-	float nearPlane;
-	float farPlane;
-
-};
-
-layout(binding = 1, std140) uniform LocalParams
-{
-	mat4 uWorldMatrix;
-	mat4 uWorldViewProjectionMatrix;
-	Light directional;
-};
-
-
-#if defined(VERTEX) ///////////////////////////////////////////////////
-
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
-
-out vec3 vNormal;
-out vec2 vTexCoord;
-
-void main()
-{
-	vTexCoord = aTexCoord;
-	vNormal = vec3(uWorldMatrix * vec4(aNormal,0.0));
-	gl_Position = vec4(aPosition, 1.0);
-}
-
-#elif defined(FRAGMENT) ///////////////////////////////////////////////
-
 in vec2 vTexCoord;
-in vec3 vNormal;
 
 uniform sampler2D positionOut;
 uniform sampler2D normalOut;
 uniform sampler2D diffuseOut;
 uniform sampler2D depthOut;
 
-layout(location = 4) out vec4 resultColor;
+
+
+layout(binding = 0, std140) uniform GlobalParams
+{
+	vec3 uCameraPosition;
+	vec2 uCameraResolution;
+	float nearPlane;
+	float farPlane;
+
+};
+
+layout(binding = 2, std140) uniform LightParams
+{
+	mat4 uWorldMatrix;
+	mat4 uWorldViewProjectionMatrix;
+	Light directional;
+};
+
+layout(location = 0) out vec4 resultColor;
 
 void main()
 {
-	
-	vec3 diffuse = texture(diffuseOut, vTexCoord).xyz;
-	vec3 normal = texture(normalOut, vTexCoord).xyz;
-	vec3 position = texture(positionOut, vTexCoord).xyz;
+	resultColor = vec4(1.0,1.0,1.0,1.0);
 
-	vec3 resultAmbient = directional.color * 0.2;
-	vec3 resultDiffuse = directional.color * mix(vec3(0), diffuse, dot(normal, directional.direction)) * 0.7;
+	vec3 diffuse = texture(diffuseOut, vTexCoord).rgb;
+	vec3 normal = texture(normalOut, vTexCoord).rgb;
+	vec3 position = texture(positionOut, vTexCoord).rgb;
+
 
 	vec3 viewDir = normalize(uCameraPosition - position);
-	vec3 reflectDir = normalize(reflect(-normalize(directional.direction),  vNormal));
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 40.0);
-	vec3 resultSpecular =  spec * directional.color; 
+	vec3 reflectDir = reflect(-normalize(directional.direction),  normal);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+	float diff = max(dot(normal, directional.direction),0.0);
+	
+	vec3 resultAmbient = directional.color * 0.3;
+	vec3 resultDiffuse = directional.color * diff * 0.7;
+	vec3 resultSpecular =  spec * directional.color * 0.5; 
 
 
-	resultColor = vec4(resultAmbient + resultAmbient + resultSpecular, 1.0);
+	resultColor = vec4((resultAmbient + resultAmbient + resultSpecular) * diffuse, 1.0);
 }
 
 #endif
@@ -195,6 +200,9 @@ void main()
 
 #ifdef POINT_LIGHT
 
+#if defined(VERTEX) ///////////////////////////////////////////////////
+
+
 struct Light
 {
 	vec3 color;
@@ -202,70 +210,77 @@ struct Light
 	vec3 position;
 };
 
-layout(binding = 0, std140) uniform GlobalParams
-{
-	vec3 uCameraPosition;
-	float nearPlane;
-	float farPlane;
-};
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec2 aTexCoord;
 
-layout(binding = 1, std140) uniform LocalParams
+
+layout(binding = 2, std140) uniform LightParams
 {
 	mat4 uWorldMatrix;
 	mat4 uWorldViewProjectionMatrix;
 	Light pointLight;
 };
 
-#if defined(VERTEX) ///////////////////////////////////////////////////
-
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
-
-out vec2 vTexCoord;
 out vec3 vPosition;
-out vec3 vNormal;
-out vec3 vViewDir;
 
 void main()
 {
-	vTexCoord = aTexCoord;
-	vPosition = vec3(uWorldMatrix * vec4(aPosition, 1.0));
-	vNormal = vec3(uWorldMatrix * vec4(aNormal,0.0));
-	vViewDir = normalize(uCameraPosition - vPosition);
 	gl_Position = uWorldViewProjectionMatrix * vec4(aPosition, 1.0);
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
+
+
+struct Light
+{
+	vec3 color;
+	vec3 direction;
+	vec3 position;
+};
+
 
 uniform sampler2D positionOut;
 uniform sampler2D normalOut;
 uniform sampler2D diffuseOut;
 uniform sampler2D depthOut;
 
-layout(location = 4) out vec4 resultColor;
+layout(binding = 0, std140) uniform GlobalParams
+{
+	vec3 uCameraPosition;
+	vec2 uCameraResolution;
+	float nearPlane;
+	float farPlane;
+};
 
-in vec2 vTexCoord;
-in vec3 vPosition;
-in vec3 vNormal;
-in vec3 vViewDir;
+layout(binding = 2, std140) uniform LightParams
+{
+	mat4 uWorldMatrix;
+	mat4 uWorldViewProjectionMatrix;
+	Light pointLight;
+};
+
+
+layout(location = 0) out vec4 resultColor;
 
 
 void main()
 {
+	resultColor = vec4(1.0,1.0,1.0,1.0);
 
-	vec3 diffuse = texture(diffuseOut, vTexCoord).xyz;
-	vec3 normal = texture(normalOut, vTexCoord).xyz;
-	vec3 position = texture(positionOut, vTexCoord).xyz;
+	vec2 vTexCoord = vec2(gl_FragCoord.x / uCameraResolution.x, gl_FragCoord.y / uCameraResolution.y);
+	vec3 diffuse = texture(diffuseOut, vTexCoord).rgb;
+	vec3 normal = texture(normalOut, vTexCoord).rgb;
+	vec3 position = texture(positionOut, vTexCoord).rgb;
 	float depth = texture(depthOut, vTexCoord).x;
 
-	vec3 lightDir = normalize(pointLight.position - vPosition);
-	vec3 reflectDir = reflect(-lightDir,  normalize(vNormal));
+	vec3 vViewDir = normalize(uCameraPosition - position);
+	vec3 lightDir = normalize(pointLight.position - position);
+	vec3 reflectDir = reflect(-lightDir,  normalize(normal));
 
-	float diff = max(dot(normalize(vNormal), lightDir), 0.0);
+	float diff = max(dot(normalize(normal), lightDir), 0.0);
 	float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 40.0);
 
-	float lightDistance = length(pointLight.position - vPosition);
+	float lightDistance = length(pointLight.position - position);
 	
 	float attenuation = 1.0 / (1.0 + 0.09 * lightDistance + 0.032 * (lightDistance * lightDistance)); 
 
@@ -277,7 +292,7 @@ void main()
 	resultDiffuse  *= attenuation;
 	resultSpecular *= attenuation;
 				 
-	resultColor += vec4((resultSpecular + resultDiffuse + resultAmbient),1.0);
+	resultColor += vec4((resultSpecular + resultDiffuse + resultAmbient) * diffuse,1.0);
 }
 
 #endif
