@@ -311,18 +311,6 @@ void InitGBuffers(App* app)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, app->depthAttachmentHandle, 0);
 
 
-    
-    //glGenFramebuffers(1, &app->depthAttachmentHandle);
-    //glBindTexture(GL_TEXTURE_2D, app->depthAttachmentHandle);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, app->displaySize.x, app->displaySize.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glBindTexture(GL_TEXTURE_2D, 0);
-
-
     GLenum framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -412,8 +400,8 @@ void Init(App* app)
 
 
 
-    app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, -1.0f, 1.0f), vec3(0.0f, 10.0f, 0.0f), TransformPositionScale(vec3(1.0f, -1.0f, 1.0f), vec3(1.0f))));
-    //app->lights.push_back(new Light(LIGHT_POINT, vec3(0.f, 0.f, 0.7f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 10.0f, -2.0f), TransformPositionScale(vec3(0.0f, 10.0f, -2.0f), vec3(1.0f))));
+    app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(-1.0f, 1.0f, 1.0f), vec3(0.0f, 10.0f, 0.0f), TransformPositionScale(vec3(1.0f, -1.0f, 1.0f), vec3(1.0f))));
+    app->lights.push_back(new Light(LIGHT_POINT, vec3(0.f, 0.f, 0.7f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 3.0f, 3.0f), TransformPositionScale(vec3(0.0f, 2.0f, -0.0f), vec3(7.0f))));
 
     CreateQuadToRender(app);
     SetUpDeferredShading(app);
@@ -488,15 +476,12 @@ void Update(App* app)
 
     MapBuffer(app->buffer, GL_WRITE_ONLY);
 
-    /*glBindBuffer(GL_UNIFORM_BUFFER, app->buffer.handle);
-    app->buffer.data = (u8*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-    app->buffer.head = 0;*/
 
     //Initialize global uniforms
     app->globalParamsOffset = app->buffer.head;
 
     PushVec3(app->buffer, app->camera.GetPosition());
-    PushVec2(app->buffer, app->displaySize);
+    PushVec2(app->buffer, glm::vec2(app->displaySize.x, app->displaySize.y));
     PushFloat(app->buffer, app->camera.GetNearPlane());
     PushFloat(app->buffer, app->camera.GetFarPlane());
  
@@ -546,7 +531,23 @@ void Update(App* app)
 
 void GeometryPass(App* app)
 {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->Gbuffer);
 
+    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+    glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
+
+    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    glEnable(GL_DEPTH_TEST);
+
+    glDisable(GL_BLEND);
+
+    glDepthMask(GL_TRUE);
+
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
 
@@ -599,7 +600,23 @@ void GeometryPass(App* app)
 
 void LightPass(App* app)
 {
+
+
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+    glDisable(GL_DEPTH_TEST);
+
+    glDepthMask(GL_FALSE);
+
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, app->buffer.handle, app->globalParamsOffset, app->globalParamsSize);
+
+
+    Program lightProgram = app->programs[app->directionalLightProgramIdx];
 
     for (u32 i = 0; i < app->lights.size(); ++i)
     {
@@ -607,10 +624,13 @@ void LightPass(App* app)
 
         switch (light->GetType())
         {
-        case LightType::LIGHT_DIRECTIONAL: glUseProgram(app->programs[app->directionalLightProgramIdx].handle); break;
-        case LightType::LIGHT_POINT: glUseProgram(app->programs[app->pointLightProgramIdx].handle); break;
+        case LightType::LIGHT_DIRECTIONAL: lightProgram = app->programs[app->directionalLightProgramIdx]; break;
+        case LightType::LIGHT_POINT: lightProgram = app->programs[app->pointLightProgramIdx]; break;
 
         }
+
+        glUseProgram(lightProgram.handle);
+
 
         glBindBufferRange(GL_UNIFORM_BUFFER, 2, app->buffer.handle, app->lights[i]->GetLocalParamsOffset(), app->lights[i]->GetLocalParamsSize());
 
@@ -631,62 +651,54 @@ void LightPass(App* app)
 
 
 
-        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glBindVertexArray(app->framebufferVAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+        switch (light->GetType())
+        {
+        case LightType::LIGHT_DIRECTIONAL:
+        {
+            glBindVertexArray(app->framebufferVAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+            glBindVertexArray(0);
+            glUseProgram(0);
+            break;
+        }
+        case LightType::LIGHT_POINT: 
+        {
+
+            Model& model = app->models[app->modelSphereId];
+            Mesh& mesh = app->meshes[model.meshIdx];
+
+            for (u32 i = 0; i < mesh.GetSubMeshes().size(); ++i)
+            {
+                GLuint vao = GetVAO(mesh, i, lightProgram);
+                glBindVertexArray(vao);
+
+
+                Submesh& submesh = mesh.GetSubMesh(i);
+                glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+            }
+
+            glBindVertexArray(0);
+            glUseProgram(0);
+
+            break;
+        }
+
+        }
 
     }
     
 }
 
-
-void Render(App* app)
+void FinalPassAndRender(App* app)
 {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->Gbuffer);
-
-
-    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-    glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
-
-    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
-    
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    
-    glEnable(GL_DEPTH_TEST);
-    
-    glDisable(GL_BLEND);
-
-    glDepthMask(GL_TRUE);
-
-    
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    GeometryPass(app);
-    
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    
-    glDisable(GL_DEPTH_TEST);
-    
-    glDepthMask(GL_FALSE);
-
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-
-    LightPass(app);
-
-    glBindVertexArray(0);
-    glUseProgram(0);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   
+
     glUseProgram(app->programs[app->drawFramebufferProgramIdx].handle);
     glBindVertexArray(app->framebufferVAO);
 
@@ -695,6 +707,7 @@ void Render(App* app)
 
 
     glActiveTexture(GL_TEXTURE0);
+
     switch (app->renderTarget)
     {
     case RenderTarget::POSITION:
@@ -709,7 +722,7 @@ void Render(App* app)
     case RenderTarget::DEPTH:
         glBindTexture(GL_TEXTURE_2D, app->GDepth);
         break;
-    case RenderTarget::FINAL :
+    case RenderTarget::FINAL:
         glBindTexture(GL_TEXTURE_2D, app->GFinal);
         break;
     }
@@ -719,6 +732,17 @@ void Render(App* app)
     glBindVertexArray(0);
     glUseProgram(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Render(App* app)
+{
+
+    GeometryPass(app);
+
+    LightPass(app);
+
+    FinalPassAndRender(app);
+    
 }
 
 GLuint GetVAO(Mesh& mesh, u32 submeshIndex, const Program& program)

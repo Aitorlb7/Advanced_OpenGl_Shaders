@@ -184,12 +184,13 @@ void main()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
 	float diff = max(dot(normal, directional.direction),0.0);
 	
-	vec3 resultAmbient = directional.color * 0.3;
+
+	vec3 resultAmbient = directional.color * 0.1;
 	vec3 resultDiffuse = directional.color * diff * 0.7;
-	vec3 resultSpecular =  spec * directional.color * 0.5; 
+	vec3 resultSpecular =  spec * directional.color * 0.3; 
 
 
-	resultColor = vec4((resultAmbient + resultAmbient + resultSpecular) * diffuse, 1.0);
+	resultColor = vec4((resultAmbient + resultDiffuse + resultSpecular) * diffuse, 1.0);
 }
 
 #endif
@@ -220,8 +221,6 @@ layout(binding = 2, std140) uniform LightParams
 	mat4 uWorldViewProjectionMatrix;
 	Light pointLight;
 };
-
-out vec3 vPosition;
 
 void main()
 {
@@ -262,37 +261,51 @@ layout(binding = 2, std140) uniform LightParams
 
 layout(location = 0) out vec4 resultColor;
 
+float LinearizeDepth(float depth) 
+{
+    float z = depth * 2.0 - 1.0;
+    return (2.0 * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));	
+}
 
 void main()
 {
-	resultColor = vec4(1.0,1.0,1.0,1.0);
+
+	resultColor = vec4(0.0,0.0,0.0,0.0);
 
 	vec2 vTexCoord = vec2(gl_FragCoord.x / uCameraResolution.x, gl_FragCoord.y / uCameraResolution.y);
+	
 	vec3 diffuse = texture(diffuseOut, vTexCoord).rgb;
 	vec3 normal = texture(normalOut, vTexCoord).rgb;
 	vec3 position = texture(positionOut, vTexCoord).rgb;
 	float depth = texture(depthOut, vTexCoord).x;
 
+	float vDepth = LinearizeDepth(gl_FragCoord.z) / farPlane;
+
 	vec3 vViewDir = normalize(uCameraPosition - position);
 	vec3 lightDir = normalize(pointLight.position - position);
 	vec3 reflectDir = reflect(-lightDir,  normalize(normal));
 
-	float diff = max(dot(normalize(normal), lightDir), 0.0);
-	float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 40.0);
 
 	float lightDistance = length(pointLight.position - position);
 	
-	float attenuation = 1.0 / (1.0 + 0.09 * lightDistance + 0.032 * (lightDistance * lightDistance)); 
+	if(lightDistance < 7.0)
+	{
+		
+		float diff = max(dot(normalize(normal), lightDir), 0.0);
+		float spec = pow(max(dot(vViewDir, reflectDir), 0.0), 40.0);
 
-	vec3 resultDiffuse = diff * pointLight.color * diffuse * 0.7;
-	vec3 resultSpecular =  spec * pointLight.color; 
-	vec3 resultAmbient = pointLight.color * 0.2;
+		float attenuation = 1.0 / (1.0 + 0.09 * lightDistance + 0.032 * (lightDistance * lightDistance)); 
 
-	resultAmbient  *= attenuation;
-	resultDiffuse  *= attenuation;
-	resultSpecular *= attenuation;
+		vec3 resultDiffuse = diff * pointLight.color * 0.7;
+		vec3 resultSpecular =  spec * pointLight.color * 0.3; 
+		vec3 resultAmbient = pointLight.color * 0.2;
+
+		resultAmbient  *= attenuation;
+		resultDiffuse  *= attenuation;
+		resultSpecular *= attenuation;
 				 
-	resultColor += vec4((resultSpecular + resultDiffuse + resultAmbient) * diffuse,1.0);
+		resultColor += vec4((resultSpecular + resultDiffuse + resultAmbient) * diffuse,1.0);
+	}
 }
 
 #endif
