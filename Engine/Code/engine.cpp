@@ -10,6 +10,7 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "Light.h"
+#include "Skybox.h"
 
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
 {
@@ -360,6 +361,12 @@ void Init(App* app)
 
     glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+    Skybox::SetUpSkyBoxBuffers();
+    Skybox::CreateSkyboxTexture();
+    app->skyboxProgramIdx = LoadProgram(app, "shaders.glsl", "SKYBOX");
+
     app->mode = Mode::TEXTURED_MESH;
 
 
@@ -474,8 +481,10 @@ void Update(App* app)
     app->camera.SetViewMatrix(lookAt(app->camera.GetPosition(), app->camera.GetTarget(), vec3(0.f, 1.f, 0.f)));
     //app->camera.SetViewMatrix(translate(app->camera.GetPosition()));
 
-    MapBuffer(app->buffer, GL_WRITE_ONLY);
 
+
+
+    MapBuffer(app->buffer, GL_WRITE_ONLY);
 
     //Initialize global uniforms
     app->globalParamsOffset = app->buffer.head;
@@ -736,6 +745,7 @@ void FinalPassAndRender(App* app)
 
 void Render(App* app)
 {
+    Skybox::RenderSkybox(app, app->skyboxProgramIdx);
 
     GeometryPass(app);
 

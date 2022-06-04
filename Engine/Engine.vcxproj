@@ -30,6 +30,7 @@
     <ClCompile Include="Code\Plane.cpp" />
     <ClCompile Include="Code\platform.cpp" />
     <ClCompile Include="Code\PrimitiveLoader.cpp" />
+    <ClCompile Include="Code\Skybox.cpp" />
     <ClCompile Include="Code\Sphere.cpp" />
     <ClCompile Include="ThirdParty\glad\include\glad\glad.c" />
     <ClCompile Include="ThirdParty\imgui-docking\imgui.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="Code\Plane.h" />
     <ClInclude Include="Code\platform.h" />
     <ClInclude Include="Code\PrimitiveLoader.h" />
+    <ClInclude Include="Code\Skybox.h" />
     <ClInclude Include="Code\Sphere.h" />
     <ClInclude Include="ThirdParty\glad\include\glad\glad.h" />
     <ClInclude Include="ThirdParty\glad\include\glad\khrplatform.h" />

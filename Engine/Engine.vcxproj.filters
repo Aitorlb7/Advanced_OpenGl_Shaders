@@ -99,6 +99,9 @@
     <ClCompile Include="Code\PrimitiveLoader.cpp">
       <Filter>Engine\Tools</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Skybox.cpp">
+      <Filter>Engine\Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ThirdParty\imgui-docking\imconfig.h">
@@ -168,6 +171,9 @@
       <Filter>Engine\Primitives</Filter>
     </ClInclude>
     <ClInclude Include="Code\PrimitiveLoader.h">
+      <Filter>Engine\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Skybox.h">
       <Filter>Engine\Tools</Filter>
     </ClInclude>
   </ItemGroup>

@@ -111,6 +111,7 @@ struct App
     u32 texturedMeshProgramIdx;
     u32 directionalLightProgramIdx;
     u32 pointLightProgramIdx;
+    u32 skyboxProgramIdx;
 
     // texture indices
     u32 diceTexIdx;

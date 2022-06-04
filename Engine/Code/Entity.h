@@ -2,19 +2,6 @@
 #include "platform.h"
 #include <glad/glad.h>
 
-//struct Transform
-//{	
-//
-//	Transform() {};
-//	Transform(glm::mat4 _matrix, vec3 _position) 
-//	{
-//		matrix = _matrix;
-//		position = _position;	
-//	}
-//
-//	
-//};
-
 enum class EntityType
 {
 	MODEL,
