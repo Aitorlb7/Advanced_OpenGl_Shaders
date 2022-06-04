@@ -745,7 +745,14 @@ void FinalPassAndRender(App* app)
 
 void Render(App* app)
 {
-    Skybox::RenderSkybox(app, app->skyboxProgramIdx);
+
+    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    Skybox::RenderSkybox(app, app->programs[app->skyboxProgramIdx]);
 
     GeometryPass(app);
 

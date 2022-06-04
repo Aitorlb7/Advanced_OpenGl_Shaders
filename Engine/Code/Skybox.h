@@ -3,12 +3,13 @@
 #include "platform.h"
 
 struct App;
+struct Program;
 
 namespace Skybox
 {
 
 	void SetUpSkyBoxBuffers();
 	u32 CreateSkyboxTexture();
-	void RenderSkybox(App* app, u32 SkyboxProgramID);
+	void RenderSkybox(App* app, Program& SkyboxProgram);
 	
 };
