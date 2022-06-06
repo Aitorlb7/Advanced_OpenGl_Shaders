@@ -61,6 +61,16 @@
 	}; //Add proper names
 void Skybox::SetUpSkyBoxBuffers()
 {
+	float texCoords[] = {
+		0.0,0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0,0.0,
+		1.0, 0.0,
+
+	};
+
 	unsigned int skyboxVBO, skyboxEBO, TexCoordsBuffer;
 	glGenVertexArrays(1, &SkyboxVAO);
 	glGenBuffers(1, &skyboxVBO);
@@ -72,6 +82,15 @@ void Skybox::SetUpSkyBoxBuffers()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+
+	glGenBuffers(1, &TexCoordsBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, TexCoordsBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -133,7 +152,7 @@ void Skybox::RenderSkybox(App* app, Program& SkyboxProgram)
 	//glDepthFunc(GL_LEQUAL);
 	
 	glUseProgram(SkyboxProgram.handle);
-	mat4 modelMatrix = TransformPositionScale(app->camera.GetPosition(), vec3(1.f));
+	mat4 modelMatrix = TransformPositionScale(app->camera.GetPosition(), vec3(1000.f));
 	//mat4 resultMatrix = glm::transpose(modelMatrix) * glm::transpose(app->camera.GetView()) * glm::transpose(app->camera.GetProjection());
 	//mat4 resultMatrix = modelMatrix * app->camera.GetView() * app->camera.GetProjection();
 
@@ -154,7 +173,7 @@ void Skybox::RenderSkybox(App* app, Program& SkyboxProgram)
 	uniformLoc = glGetUniformLocation(SkyboxProgram.handle, "depthTexture");
 	glUniform1i(uniformLoc, 1);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, app->GDepth);
+	glBindTexture(GL_TEXTURE_2D, app->GAlbedo);
 
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 

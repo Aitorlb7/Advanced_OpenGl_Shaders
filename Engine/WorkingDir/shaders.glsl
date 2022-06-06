@@ -320,8 +320,10 @@ void main()
 #if defined(VERTEX) ///////////////////////////////////////////////////
 
 layout (location = 0) in vec3 position;
+layout(location = 1) in vec2 aTexCoord;
 
 out vec3 TexCoord;
+out vec2 planeTexCoord;
 
 uniform mat4 resultMatrix;
 
@@ -330,6 +332,8 @@ void main()
     vec4 fullMatrix = resultMatrix * vec4(position, 1.0);
     gl_Position = fullMatrix.xyww;
     TexCoord = position;
+
+	planeTexCoord = (position.xy + vec2(1.0)) / 2.0;
 }
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
@@ -337,18 +341,18 @@ void main()
 layout (location = 0) out vec4 color;
 
 in vec3 TexCoord;
+in vec2 planeTexCoord;
 
 uniform samplerCube skybox;
-
 uniform sampler2D depthTexture;
 
 void main()
 { 
 	color = texture(skybox, TexCoord);
 	
-	float depth = texture(depthTexture , TexCoord.xz).z;
+	float depth = texture(depthTexture , planeTexCoord).z;
 	
-	if(depth == 0.0) discard;
+	if(depth != 0.0) discard;
 
 }
 
