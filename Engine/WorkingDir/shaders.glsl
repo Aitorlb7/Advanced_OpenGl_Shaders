@@ -334,14 +334,79 @@ void main()
 
 #elif defined(FRAGMENT) ///////////////////////////////////////////////
 
+layout (location = 0) out vec4 color;
+
 in vec3 TexCoord;
-out vec4 color;
 
 uniform samplerCube skybox;
 
+uniform sampler2D depthTexture;
+
 void main()
 { 
-   color = texture(skybox, TexCoord);
+	color = texture(skybox, TexCoord);
+	
+	float depth = texture(depthTexture , TexCoord.xz).z;
+	
+	if(depth == 0.0) discard;
+
+}
+
+#endif
+#endif
+
+
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+#ifdef REFLECTION
+
+#if defined(VERTEX) ///////////////////////////////////////////////////
+
+layout (location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 texCoord;
+
+
+out vec3 vNormal;
+out vec3 vPosition;
+
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+
+void main()
+{
+	vNormal = mat3(inverse(transpose(modelMatrix))) * normal;
+	vPosition = vec3(modelMatrix * vec4(position, 1.0));
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+}
+
+#elif defined(FRAGMENT) ///////////////////////////////////////////////
+
+
+layout(binding = 0, std140) uniform GlobalParams
+{
+	vec3 uCameraPosition;
+	vec2 uCameraResolution;
+	float nearPlane;
+	float farPlane;
+};
+
+
+in vec3 vPosition;
+in vec3 vNormal;
+
+uniform samplerCube skybox;
+
+layout(location = 0) out vec4 resultColor;
+
+void main()
+{ 
+   vec3 I = normalize(vPosition - uCameraPosition);
+   vec3 R = reflect(I, normalize(vNormal));
+   
+   resultColor = vec4(texture(skybox, R).rgb, 1.0);
 }
 
 #endif

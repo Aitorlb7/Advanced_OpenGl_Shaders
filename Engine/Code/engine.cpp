@@ -361,7 +361,6 @@ void Init(App* app)
 
     glEnable(GL_DEPTH_TEST);
 
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     Skybox::SetUpSkyBoxBuffers();
     Skybox::CreateSkyboxTexture();
@@ -540,23 +539,15 @@ void Update(App* app)
 
 void GeometryPass(App* app)
 {
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->Gbuffer);
 
-    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-    glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
 
     glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glEnable(GL_DEPTH_TEST);
 
     glDisable(GL_BLEND);
 
-    glDepthMask(GL_TRUE);
-
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
 
@@ -745,21 +736,27 @@ void FinalPassAndRender(App* app)
 
 void Render(App* app)
 {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->Gbuffer);
 
-    glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+    glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
 
+
+    glDepthMask(GL_TRUE);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Skybox::RenderSkybox(app, app->programs[app->skyboxProgramIdx]);
 
     GeometryPass(app);
 
     LightPass(app);
 
+    Skybox::RenderSkybox(app, app->programs[app->skyboxProgramIdx]);
+    
     FinalPassAndRender(app);
     
+    
+
 }
 
 GLuint GetVAO(Mesh& mesh, u32 submeshIndex, const Program& program)

@@ -75,6 +75,7 @@ struct Model
 
 struct App
 {
+    bool skyboxActive = false;
 
     // Loop
     f32  deltaTime;
@@ -143,6 +144,7 @@ struct App
     GLuint GPosition;
     GLuint GNormal;
     GLuint GDepth;
+    GLuint GSkybox;
     GLuint GFinal;
 
     RenderTarget renderTarget;
@@ -156,6 +158,7 @@ struct App
 
     // Location of the texture uniform in the textured quad shader
     GLuint  programUniformTexture;
+    GLuint programUniformSkyboxTexture;
 
     GLuint  pointUniformPosition;
     GLuint  pointUniformNormal;
