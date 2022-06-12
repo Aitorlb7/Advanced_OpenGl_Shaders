@@ -128,6 +128,7 @@ struct App
     u32 skyboxTexId;
 
     u32 modelPatrickId;
+    u32 modelBeachId;
     u32 modelSphereId;
     u32 modelPlaneId;
 

@@ -176,9 +176,14 @@ u32 PrimitiveLoader::LoadPlane(App* app)
 
 	material.SetName("PlaneMaterial");
 
-	material.SetAlbedoTextureIdx(LoadTexture2D(app, "Wall/WallDiffuse.png"));
-	material.SetNormalsTextureIdx(LoadTexture2D(app, "Wall/WallNormal.png"));
-	material.SetBumpTextureIdx(LoadTexture2D(app, "Wall/WallDisplacement.png"));
+	//material.SetAlbedoTextureIdx(LoadTexture2D(app, "Wall/WallDiffuse.png"));
+	//material.SetNormalsTextureIdx(LoadTexture2D(app, "Wall/WallNormal.png"));
+	//material.SetBumpTextureIdx(LoadTexture2D(app, "Wall/WallDisplacement.png"));
+
+	material.SetAlbedoTextureIdx(LoadTexture2D(app, "Rock/Rocks016_2K_Color.png"));
+	material.SetNormalsTextureIdx(LoadTexture2D(app, "Rock/Rocks016_2K_NormalGL.png"));
+	material.SetBumpTextureIdx(LoadTexture2D(app, "Rock/Rocks016_2K_Displacement.png"));
+
 
 	model.materialIdx.push_back(baseMeshMaterialIndex);
 

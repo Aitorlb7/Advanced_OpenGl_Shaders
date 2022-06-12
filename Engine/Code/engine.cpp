@@ -399,14 +399,15 @@ void Init(App* app)
     app->worldViewProjectionMatrix = app->camera.GetProjection() * app->camera.GetView() * app->worldMatrix;    
 
 
-    app->entities.push_back(new Entity("Patrick1", EntityType::MODEL,vec3(5.f, 0.f, 5.f), vec3(1.5f)));
-    app->entities.push_back(new Entity("Patrick2", EntityType::MODEL, vec3(0.f, 0.f, 0.f), vec3(1.5f)));
-    app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, vec3(-5.f, 0.f, 5.f), vec3(1.5f)));
+    app->entities.push_back(new Entity("Patrick1", EntityType::MODEL,vec3(-3.f, 2.2f, 8.f), vec3(1.7f)));
+    app->entities.push_back(new Entity("Beach", EntityType::BEACH, vec3(0.f, 0.f, 0.f), vec3(4.0f)));
+    //app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, vec3(-5.f, 0.f, 5.f), vec3(1.5f)));
     app->entities.push_back(new Sphere("Sphere", vec3(0.f, 5.f, 0.f), vec3(1.f)));
     app->entities.push_back(new Plane("Plane", vec3(0.f, 0.f, -0.5f), vec3(7.0f, 7.0f, 2.0f)));
 
     
-    app->modelPatrickId = ModelLoader::LoadModel(app, "Patrick/Patrick.obj"); 
+    app->modelPatrickId = ModelLoader::LoadModel(app, "Cyborg/cyborg.obj");
+    app->modelBeachId = ModelLoader::LoadModel(app, "Beach/Beach.obj");
     app->modelSphereId = PrimitiveLoader::LoadSphere(app);
     app->modelPlaneId = PrimitiveLoader::LoadPlane(app);
 
@@ -566,6 +567,7 @@ void GeometryPass(App* app)
         switch (app->entities[i]->GetType())
         {
             case EntityType::MODEL: model = app->models[app->modelPatrickId]; break;
+            case EntityType::BEACH: model = app->models[app->modelBeachId]; break;
             case EntityType::SPHERE: model = app->models[app->modelSphereId]; break;
             case EntityType::PLANE: model = app->models[app->modelPlaneId]; break;
 
