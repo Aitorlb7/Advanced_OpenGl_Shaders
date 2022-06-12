@@ -7,7 +7,7 @@ class Plane : public Entity
 public:
 
 	Plane();
-	Plane(std::string name, mat4 matrix, vec3 position);
+	Plane(std::string name, vec3 position, vec3 size);
 	~Plane();
 
 private:

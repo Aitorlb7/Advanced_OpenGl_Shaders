@@ -9,7 +9,7 @@ Sphere::Sphere() : Entity()
 	entityType = EntityType::SPHERE;
 }
 
-Sphere::Sphere(std::string name, mat4 matrix, vec3 position) : Entity(name,EntityType::SPHERE, matrix, position)
+Sphere::Sphere(std::string name, vec3 position, vec3 size) : Entity(name,EntityType::SPHERE,position, size)
 {
 }
 

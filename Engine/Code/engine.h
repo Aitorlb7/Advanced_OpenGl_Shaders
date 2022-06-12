@@ -55,8 +55,7 @@ enum RenderTarget {
     POSITION,
     NORMAL,
     DIFFUSE,
-    DEPTH,
-    SKYBOX
+    DEPTH
 };
 
 
@@ -155,7 +154,7 @@ struct App
 
     RenderTarget renderTarget;
     u32 renderAttachment;
-    const char* renderTargetsChar[6] = {"Final", "Position", "Normals", "Albedo", "Depth" , "Skybox"};
+    const char* renderTargetsChar[5] = {"Final", "Position", "Normals", "Albedo", "Depth"};
 
     // Embedded geometry (in-editor simple meshes such as
     // a screen filling quad, a cube, a sphere...)

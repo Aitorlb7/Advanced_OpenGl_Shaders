@@ -399,11 +399,11 @@ void Init(App* app)
     app->worldViewProjectionMatrix = app->camera.GetProjection() * app->camera.GetView() * app->worldMatrix;    
 
 
-    app->entities.push_back(new Entity("Patrick1", EntityType::MODEL, TransformPositionScale(vec3(5.f, 0.f, 5.f), vec3(1.f)), vec3(5.f, 0.f, -5.f)));
-    app->entities.push_back(new Entity("Patrick2", EntityType::MODEL, TransformPositionScale(vec3(0.f, 0.f, 0.f), vec3(1.f)), vec3(0.f, 0.f, 0.f)));
-    app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, TransformPositionScale(vec3(-5.f, 0.f, 5.f), vec3(1.f)), vec3(-5.f, 0.f, -5.f)));
-    app->entities.push_back(new Sphere("Sphere", TransformPositionScale(vec3(0.f, 5.f, 0.f), vec3(1.f)), vec3(0.f, 5.f, 0.f)));
-    app->entities.push_back(new Plane("Plane", TransformPositionScale(vec3(0.f, 0.0f, -0.5f), vec3(7.0f,7.0f,2.0f)), vec3(0.f, 0.f, -0.5f)));
+    app->entities.push_back(new Entity("Patrick1", EntityType::MODEL,vec3(5.f, 0.f, 5.f), vec3(1.5f)));
+    app->entities.push_back(new Entity("Patrick2", EntityType::MODEL, vec3(0.f, 0.f, 0.f), vec3(1.5f)));
+    app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, vec3(-5.f, 0.f, 5.f), vec3(1.5f)));
+    app->entities.push_back(new Sphere("Sphere", vec3(0.f, 5.f, 0.f), vec3(1.f)));
+    app->entities.push_back(new Plane("Plane", vec3(0.f, 0.f, -0.5f), vec3(7.0f, 7.0f, 2.0f)));
 
     
     app->modelPatrickId = ModelLoader::LoadModel(app, "Patrick/Patrick.obj"); 
@@ -757,9 +757,6 @@ void FinalPassAndRender(App* app)
         break;
     case RenderTarget::FINAL:
         glBindTexture(GL_TEXTURE_2D, app->GFinal);
-        break;
-    case RenderTarget::SKYBOX:
-        glBindTexture(GL_TEXTURE_2D, app->GSkybox); // Can't see it :(
         break;
     }
 

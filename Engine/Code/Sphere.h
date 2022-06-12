@@ -9,7 +9,7 @@ class Sphere : public Entity
 public:
 
 	Sphere();
-	Sphere(std::string name, mat4 matrix, vec3 position);
+	Sphere(std::string name, vec3 position, vec3 size);
 	~Sphere();
 
 };

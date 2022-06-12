@@ -14,7 +14,7 @@ class Entity
 {
 public:
 	Entity();
-	Entity(std::string name,EntityType type, mat4 matrix, vec3 position);
+	Entity(std::string name,EntityType type,vec3 position, vec3 size);
 	~Entity();
 
 	inline const std::string GetName() const { return name; };
