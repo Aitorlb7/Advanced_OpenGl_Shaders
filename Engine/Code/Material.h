@@ -23,6 +23,8 @@ public:
 	~Material();
 
     inline const u32 GetAlbedoTextureIdx() const { return albedoTextureIdx; };
+    inline const u32 GetNormalTextureIdx() const { return normalsTextureIdx; };
+    inline const u32 GetBumpTextureIdx() const { return bumpTextureIdx; };
 
     inline void SetName(std::string _name) { name = _name; };
     inline void SetAlbedo(vec3 _albedo) { albedo = _albedo; };

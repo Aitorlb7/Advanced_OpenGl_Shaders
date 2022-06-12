@@ -75,8 +75,9 @@ struct Model
 
 struct App
 {
-    bool skyboxActive = false;
-
+    bool reflectionsActive = false;
+    bool useNormalMapping = false;
+    bool useBumpMapping = false;
     // Loop
     f32  deltaTime;
     bool isRunning;
@@ -113,6 +114,9 @@ struct App
     u32 directionalLightProgramIdx;
     u32 pointLightProgramIdx;
     u32 skyboxProgramIdx;
+    u32 reflectionProgramIdx;
+    u32 normalMapProgramIdx;
+    u32 bumpMapProgramIdx;
 
     // texture indices
     u32 diceTexIdx;
@@ -121,6 +125,7 @@ struct App
     u32 normalTexIdx;
     u32 magentaTexIdx;
 
+    u32 skyboxTexId;
 
     u32 modelPatrickId;
     u32 modelSphereId;
@@ -158,7 +163,7 @@ struct App
 
     // Location of the texture uniform in the textured quad shader
     GLuint  programUniformTexture;
-    GLuint programUniformSkyboxTexture;
+    GLuint  programUniformSkyboxTexture;
 
     GLuint  pointUniformPosition;
     GLuint  pointUniformNormal;
@@ -192,7 +197,7 @@ GLuint GetVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
 
 void LoadQuad(App* app);
 
-void LoadModel(App* app);
+void LoadAtributes(App* app, Program* program);
 
 mat4 TransformScale(const vec3& scaleFactors);
 

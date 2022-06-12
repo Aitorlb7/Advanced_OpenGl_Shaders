@@ -288,7 +288,15 @@ void InitGBuffers(App* app)
     glBindTexture(GL_TEXTURE_2D, 0);
 
 
-
+    glGenTextures(1, &app->GSkybox);
+    glBindTexture(GL_TEXTURE_2D, app->GSkybox);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, app->displaySize.x, app->displaySize.y, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glGenTextures(1, &app->depthAttachmentHandle);
     glBindTexture(GL_TEXTURE_2D, app->depthAttachmentHandle);
@@ -300,7 +308,7 @@ void InitGBuffers(App* app)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-
+    
 
     glGenFramebuffers(1, &app->Gbuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, app->Gbuffer);
@@ -309,6 +317,7 @@ void InitGBuffers(App* app)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, app->GNormal, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, app->GAlbedo, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D ,app->GDepth, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D ,app->GSkybox, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, app->depthAttachmentHandle, 0);
 
 
@@ -330,7 +339,7 @@ void InitGBuffers(App* app)
     }
 
 
-    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 };
     glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -363,11 +372,9 @@ void Init(App* app)
 
 
     Skybox::SetUpSkyBoxBuffers();
-    Skybox::CreateSkyboxTexture();
+    app->skyboxTexId = Skybox::CreateSkyboxTexture();
     app->skyboxProgramIdx = LoadProgram(app, "shaders.glsl", "SKYBOX");
-
-    app->mode = Mode::TEXTURED_MESH;
-
+    LoadAtributes(app, &app->programs[app->skyboxProgramIdx]);
 
     app->diceTexIdx = LoadTexture2D(app, "dice.png");
     app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
@@ -377,6 +384,8 @@ void Init(App* app)
 
     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
     glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &app->uniformBlockAlignment);
+
+    app->buffer = CreateConstantBuffer(app->maxUniformBufferSize);
 
     glGenBuffers(1, &app->buffer.handle);
     glBindBuffer(GL_UNIFORM_BUFFER, app->buffer.handle);
@@ -397,7 +406,7 @@ void Init(App* app)
     app->entities.push_back(new Entity("Patrick2", EntityType::MODEL, TransformPositionScale(vec3(0.f, 0.f, 0.f), vec3(1.f)), vec3(0.f, 0.f, 0.f)));
     app->entities.push_back(new Entity("Patrick3", EntityType::MODEL, TransformPositionScale(vec3(-5.f, 0.f, 5.f), vec3(1.f)), vec3(-5.f, 0.f, -5.f)));
     app->entities.push_back(new Sphere("Sphere", TransformPositionScale(vec3(0.f, 5.f, 0.f), vec3(1.f)), vec3(0.f, 5.f, 0.f)));
-    app->entities.push_back(new Plane("Plane", TransformPositionScale(vec3(0.f, -3.5f, 0.f), vec3(20.f)), vec3(0.f, -5.f, 0.f)));
+    app->entities.push_back(new Plane("Plane", TransformPositionScale(vec3(0.f, 0.0f, -0.5f), vec3(7.0f,7.0f,2.0f)), vec3(0.f, 0.f, -0.5f)));
 
     
     app->modelPatrickId = ModelLoader::LoadModel(app, "Patrick/Patrick.obj"); 
@@ -407,29 +416,32 @@ void Init(App* app)
 
 
     app->lights.push_back(new Light(LIGHT_DIRECTIONAL, vec3(1.0f, 1.0f, 1.0f), vec3(-1.0f, 1.0f, 1.0f), vec3(0.0f, 10.0f, 0.0f), TransformPositionScale(vec3(1.0f, -1.0f, 1.0f), vec3(1.0f))));
-    app->lights.push_back(new Light(LIGHT_POINT, vec3(0.f, 0.f, 0.7f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 3.0f, 3.0f), TransformPositionScale(vec3(0.0f, 2.0f, -0.0f), vec3(7.0f))));
+    //app->lights.push_back(new Light(LIGHT_POINT, vec3(0.f, 0.f, 0.7f), vec3(0.0f, 0.0f, .0f), vec3(0.0f, 3.0f, 3.0f), TransformPositionScale(vec3(0.0f, 2.0f, -0.0f), vec3(7.0f))));
 
     CreateQuadToRender(app);
     SetUpDeferredShading(app);
     InitGBuffers(app);
+
     app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "TEXTURED_MESH");
+    LoadAtributes(app, &app->programs[app->texturedMeshProgramIdx]);
+
+    app->normalMapProgramIdx = LoadProgram(app, "shaders.glsl", "NORMAL_MAPPING");
+    LoadAtributes(app, &app->programs[app->normalMapProgramIdx]);
+
+    app->bumpMapProgramIdx = LoadProgram(app, "shaders.glsl", "BUMP_MAPPING");
+    LoadAtributes(app, &app->programs[app->bumpMapProgramIdx]);
 
     app->renderTarget = RenderTarget::FINAL;
-
-    switch (app->mode)
-    {
-    case TEXTURED_GEOMETRY: LoadQuad(app);  break;
-        case TEXTURED_MESH: LoadModel(app); break;
-        case NONE: break;
-    }
-
-
 }
 
 void Gui(App* app)
 {
     ImGui::Begin("Info");
     ImGui::Text("FPS: %f", 1.0f/app->deltaTime);
+
+    ImGui::Checkbox("Normal Mapping", &app->useNormalMapping);
+    ImGui::Checkbox("Bump Mapping", &app->useBumpMapping);
+
 
     if (ImGui::Begin("Camera"))
     {
@@ -479,9 +491,6 @@ void Update(App* app)
     HandleInput(app);
     app->camera.SetViewMatrix(lookAt(app->camera.GetPosition(), app->camera.GetTarget(), vec3(0.f, 1.f, 0.f)));
     //app->camera.SetViewMatrix(translate(app->camera.GetPosition()));
-
-
-
 
     MapBuffer(app->buffer, GL_WRITE_ONLY);
 
@@ -539,28 +548,23 @@ void Update(App* app)
 
 void GeometryPass(App* app)
 {
-
-
     glViewport(0, 0, app->displaySize.x, app->displaySize.y);
-
 
     glEnable(GL_DEPTH_TEST);
 
     glDisable(GL_BLEND);
 
+    Program* texturedMeshProgram = &app->programs[app->texturedMeshProgramIdx];
 
-    Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
-
-    glUseProgram(texturedMeshProgram.handle);
+    glUseProgram(texturedMeshProgram->handle);
     
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, app->buffer.handle, app->globalParamsOffset, app->globalParamsSize);
+
+    Model model;
 
     for (int i = 0; i < app->entities.size(); ++i)
     {
         glBindBufferRange(GL_UNIFORM_BUFFER, 1, app->buffer.handle, app->entities[i]->GetLocalParamsOffset(), app->entities[i]->GetLocalParamsSize());
-
-
-        Model model;
 
         switch (app->entities[i]->GetType())
         {
@@ -570,24 +574,56 @@ void GeometryPass(App* app)
 
         }
 
-
         Mesh& mesh = app->meshes[model.meshIdx];
 
         for (u32 i = 0; i < mesh.GetSubMeshes().size(); ++i)
         {
-            GLuint vao = GetVAO(mesh, i, texturedMeshProgram);
-            glBindVertexArray(vao);
 
             u32 submeshMaterialIdx = model.materialIdx[i];
             Material& submeshMaterial = app->materials[submeshMaterialIdx];
 
+            if (app->useNormalMapping && submeshMaterial.GetNormalTextureIdx() != 0)
+            {
+                if (app->useBumpMapping && submeshMaterial.GetBumpTextureIdx() != 0)
+                {
+                    texturedMeshProgram = &app->programs[app->bumpMapProgramIdx];
+                    glUseProgram(texturedMeshProgram->handle);
+                    
+                    glUniform1i(glGetUniformLocation(texturedMeshProgram->handle, "normalMap"), 1);
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.GetNormalTextureIdx()].handle);
+
+
+                    glUniform1i(glGetUniformLocation(texturedMeshProgram->handle, "bumpMap"), 2);
+                    glActiveTexture(GL_TEXTURE2);
+                    glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.GetBumpTextureIdx()].handle);
+                }
+                else
+                {
+                    texturedMeshProgram = &app->programs[app->normalMapProgramIdx];
+                    glUseProgram(texturedMeshProgram->handle);
+
+                    glUniform1i(glGetUniformLocation(texturedMeshProgram->handle, "normalMap"), 1);
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.GetNormalTextureIdx()].handle);
+
+                }
+
+            }
+
+
+            glUniform1i(glGetUniformLocation(texturedMeshProgram->handle, "textureSampler"), 0);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.GetAlbedoTextureIdx()].handle);
-            glUniform1i(0, 0); //app->texturedMeshProgram_uTexture?????
+
+            GLuint vao = GetVAO(mesh, i, *texturedMeshProgram);
+            glBindVertexArray(vao);
 
             Submesh& submesh = mesh.GetSubMesh(i);
             glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
 
+            texturedMeshProgram = &app->programs[app->texturedMeshProgramIdx];
+            glUseProgram(texturedMeshProgram->handle);
         }
 
 
@@ -600,8 +636,6 @@ void GeometryPass(App* app)
 
 void LightPass(App* app)
 {
-
-
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
     glDisable(GL_DEPTH_TEST);
@@ -698,14 +732,16 @@ void FinalPassAndRender(App* app)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-    glUseProgram(app->programs[app->drawFramebufferProgramIdx].handle);
+    Program& frameProgram = app->programs[app->drawFramebufferProgramIdx];
+    glUseProgram(frameProgram.handle);
     glBindVertexArray(app->framebufferVAO);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
+    GLuint uniformLoc = glGetUniformLocation(frameProgram.handle, "textureSampler");
+    glUniform1i(uniformLoc, 0);
     glActiveTexture(GL_TEXTURE0);
 
     switch (app->renderTarget)
@@ -727,6 +763,18 @@ void FinalPassAndRender(App* app)
         break;
     }
 
+    //uniformLoc = glGetUniformLocation(frameProgram.handle, "depthSampler");
+    //glUniform1i(uniformLoc, 1);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, app->GDepth);
+
+    //uniformLoc = glGetUniformLocation(frameProgram.handle, "skyboxSampler");
+    //glUniform1i(uniformLoc, 2);
+    //glActiveTexture(GL_TEXTURE2);
+    //glBindTexture(GL_TEXTURE_2D, app->GSkybox);
+
+
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
     glBindVertexArray(0);
@@ -738,24 +786,24 @@ void Render(App* app)
 {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, app->Gbuffer);
 
-    GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-    glDrawBuffers(ARRAY_COUNT(DrawBuffers), DrawBuffers);
 
+
+    GLenum DrawBuffers_[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5 };
+    glDrawBuffers(ARRAY_COUNT(DrawBuffers_), DrawBuffers_);
 
     glDepthMask(GL_TRUE);
+    glEnable(GL_BLEND);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
     GeometryPass(app);
 
     LightPass(app);
 
-    Skybox::RenderSkybox(app, app->programs[app->skyboxProgramIdx]);
-    
     FinalPassAndRender(app);
     
-    
+
+    //Skybox::RenderSkybox(app, app->programs[app->skyboxProgramIdx]);
 
 }
 
@@ -858,13 +906,11 @@ void LoadQuad(App* app)
     app->diceTexIdx = LoadTexture2D(app, "dice.png");
 }
 
-void LoadModel(App* app)
+void LoadAtributes(App* app, Program* program)
 {
 
-    Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
-
     int attributeCount = 0;
-    glGetProgramiv(texturedMeshProgram.handle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
+    glGetProgramiv(program->handle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
 
     for (int i = 0; i < attributeCount; ++i)
     {
@@ -872,21 +918,13 @@ void LoadModel(App* app)
         int attribNameLength = 0, attribSize = 0;
         GLenum attribType;
 
-        glGetActiveAttrib(texturedMeshProgram.handle, i, ARRAY_COUNT(attribName)
+        glGetActiveAttrib(program->handle, i, ARRAY_COUNT(attribName)
             , &attribNameLength, &attribSize, &attribType, attribName);
 
-        int attributeLocation = glGetAttribLocation(texturedMeshProgram.handle, attribName);
+        int attributeLocation = glGetAttribLocation(program->handle, attribName);
 
-        texturedMeshProgram.vertexInputLayout.attributes.push_back({ (u8)attributeLocation,(u8)attribSize });
+        program->vertexInputLayout.attributes.push_back({ (u8)attributeLocation,(u8)attribSize });
     }
-
-    //Uniforms initialization
-
-    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
-    glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &app->uniformBlockAlignment);
-
-    app->buffer = CreateConstantBuffer(app->maxUniformBufferSize);
-
 }
 
 mat4 TransformScale(const vec3& scaleFactors)

@@ -87,10 +87,7 @@ u32 PrimitiveLoader::LoadSphere(App* app)
 	Material& material = app->materials.back();
 
 	material.SetName("SphereMaterial");
-	//material.SetAlbedo(vec3(diffuseColor.r, diffuseColor.g, diffuseColor.b));
-	//material.SetEmissive(vec3(emissiveColor.r, emissiveColor.g, emissiveColor.b));
-	material.SetAlbedo(vec3(0.8f, 0.0f, 0.0f));
-	material.SetEmissive(vec3(0.8f, 0.0f, 0.0f));
+
 	material.SetAlbedoTextureIdx(app->whiteTexIdx);
 
 	model.materialIdx.push_back(baseMeshMaterialIndex);
@@ -178,11 +175,10 @@ u32 PrimitiveLoader::LoadPlane(App* app)
 	Material& material = app->materials.back();
 
 	material.SetName("PlaneMaterial");
-	//material.SetAlbedo(vec3(diffuseColor.r, diffuseColor.g, diffuseColor.b));
-	//material.SetEmissive(vec3(emissiveColor.r, emissiveColor.g, emissiveColor.b));
-	material.SetAlbedo(vec3(0.0f, 0.0f, 0.0f));
-	material.SetEmissive(vec3(0.0f, 0.0f, 0.0f));
-	material.SetAlbedoTextureIdx(app->whiteTexIdx);
+
+	material.SetAlbedoTextureIdx(LoadTexture2D(app, "Wall/WallDiffuse.png"));
+	material.SetNormalsTextureIdx(LoadTexture2D(app, "Wall/WallNormal.png"));
+	material.SetBumpTextureIdx(LoadTexture2D(app, "Wall/WallDisplacement.png"));
 
 	model.materialIdx.push_back(baseMeshMaterialIndex);
 
@@ -206,12 +202,10 @@ u32 PrimitiveLoader::LoadPlane(App* app)
 	Submesh submesh = {};
 	submesh.vertexBufferLayout = vertexBufferLayout;
 
-	
-
-	submesh.vertices.insert(submesh.vertices.end(), { -1,0,-1,  0,1,0,  0,0,  0,0,0,  0,0,0 });
-	submesh.vertices.insert(submesh.vertices.end(), { 1,0,-1,  0,1,0,  1,0,  0,0,0,  0,0,0 });
-	submesh.vertices.insert(submesh.vertices.end(), { 1,0,1,  0,1,0,  1,1,  0,0,0,  0,0,0 });
-	submesh.vertices.insert(submesh.vertices.end(), { -1,0,1,  0,1,0,  0,1,  0,0,0,  0,0,0 });
+	submesh.vertices.insert(submesh.vertices.end(), { -1,1,0,  0,0,1,  0,1, 1,0,0, 0,1,0, });
+	submesh.vertices.insert(submesh.vertices.end(), { -1,-1,0, 0,0,1,  0,0, 1,0,0, 0,1,0, });
+	submesh.vertices.insert(submesh.vertices.end(), { 1,-1,0,  0,0,1,  1,0, 1,0,0, 0,1,0, });
+	submesh.vertices.insert(submesh.vertices.end(), { 1,1,0,   0,0,1,  1,1, 1,0,0, 0,1,0, });
 
 	submesh.indices.insert(submesh.indices.end(), { 0,1,2,0,2,3 });
 	
