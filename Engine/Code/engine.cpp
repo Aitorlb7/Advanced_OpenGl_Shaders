@@ -205,10 +205,7 @@ void CreateQuadToRender(App* app)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-
-
     // Create the FBO
-
     glGenVertexArrays(1, &app->framebufferVAO);
     glBindVertexArray(app->framebufferVAO);
     glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
@@ -469,7 +466,7 @@ void Gui(App* app)
     }
 
     const char* combo_label = app->renderTargetsChar[app->renderTarget];
-    if (ImGui::BeginCombo("combo 1", combo_label))
+    if (ImGui::BeginCombo("Change Render Target", combo_label))
     {
         for (int n = 0; n < IM_ARRAYSIZE(app->renderTargetsChar); n++)
         {
@@ -568,9 +565,9 @@ void GeometryPass(App* app)
 
         switch (app->entities[i]->GetType())
         {
-        case EntityType::MODEL: model = app->models[app->modelPatrickId]; break;
-        case EntityType::SPHERE: model = app->models[app->modelSphereId]; break;
-        case EntityType::PLANE: model = app->models[app->modelPlaneId]; break;
+            case EntityType::MODEL: model = app->models[app->modelPatrickId]; break;
+            case EntityType::SPHERE: model = app->models[app->modelSphereId]; break;
+            case EntityType::PLANE: model = app->models[app->modelPlaneId]; break;
 
         }
 
@@ -760,6 +757,9 @@ void FinalPassAndRender(App* app)
         break;
     case RenderTarget::FINAL:
         glBindTexture(GL_TEXTURE_2D, app->GFinal);
+        break;
+    case RenderTarget::SKYBOX:
+        glBindTexture(GL_TEXTURE_2D, app->GSkybox); // Can't see it :(
         break;
     }
 
@@ -961,6 +961,16 @@ void HandleInput(App* app)
     if (app->input.keys[K_A] == BUTTON_PRESSED)
     {
         position.x += app->cameraMoveSpeed * app->deltaTime;
+    }
+
+    if (app->input.keys[K_SPACE] == BUTTON_PRESSED)
+    {
+        position.y += app->cameraMoveSpeed * app->deltaTime;
+    }
+
+    if (app->input.keys[K_C] == BUTTON_PRESSED)
+    {
+        position.y -= app->cameraMoveSpeed * app->deltaTime;
     }
 
     app->camera.SetPosition(position);
