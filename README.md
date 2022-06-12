@@ -1,8 +1,10 @@
 # Advanced Graphics Programming
 ****
 - **Deferred Shading**
-- **Environment Mapping** - Skybox, reflection shader
-- **Multipass Bloom** - (WIP) 
+- **Normal Mapping**
+- **Bump Mapping**
+- **Environment Mapping** - Skybox, reflection shader  (WIP) 
+
 
 ****
 ## Developers
